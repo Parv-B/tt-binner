@@ -89,14 +89,14 @@ if { [info exists ::env(OPENLANE_SDC_IDEAL_CLOCKS)] && $::env(OPENLANE_SDC_IDEAL
 # ----------------------------------------------------------------------------
 # BINNER additions
 # ----------------------------------------------------------------------------
-# Fmax capture flops (binner_fmax: g_cap[*].fcap_notouch_) sample the tapped
+# Fmax capture flops (binner_fmax: g_cap[*].fcap_keep_) sample the tapped
 # delay chain. Their paths are 10-50 ns long ON PURPOSE: failing them at
 # achievable clock rates is the measurement. Declare them false so the
 # resizer does not try to "repair" them and signoff does not flag them.
-set binner_fcap [get_cells -hierarchical *fcap_notouch_*]
+set binner_fcap [get_cells -hierarchical *fcap_keep_*]
 if { [llength $binner_fcap] > 0 } {
     puts "\[INFO] BINNER: false paths to [llength $binner_fcap] Fmax capture flops"
     set_false_path -to $binner_fcap
 } else {
-    puts "\[WARNING] BINNER: no fcap_notouch_ cells found"
+    puts "\[WARNING] BINNER: no fcap_keep_ cells found"
 }

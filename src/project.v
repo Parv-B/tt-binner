@@ -16,7 +16,7 @@
  *   ui_in[7]  FMAX_RUN (SPI mode) / bank select (pin mode)
  *                               uo_out[5] FMAX_FAIL_ANY
  *                               uo_out[6] DONE
- *                               uo_out[7] debug bit
+ *                               uo_out[7] FMAX_ARMED
  *   uio       debug byte out when UIOOE = 1, otherwise all inputs (reset state)
  *
  * Measurement sources (SRCA / SRCB, 5 bits)
@@ -44,10 +44,11 @@ module tt_um_parv_b_binner (
   // Parameters
   // ---------------------------------------------------------------------------
   localparam integer N_PUF  = 16;   // identical rings
-  localparam integer N_STG  = 25;   // stages per ring (all ring types)
+  localparam integer N_STG  = 25;   // stages per ring (INV, NAND, NOR rings)
+  localparam integer N_FO4  = 13;   // stages in the FO4 ring (4x the cells per stage)
   localparam [7:0]   ID0    = 8'h42; // 'B'
   localparam [7:0]   ID1    = 8'h4E; // 'N'
-  localparam [7:0]   VER    = 8'h01;
+  localparam [7:0]   VER    = 8'h02;
 
   // ---------------------------------------------------------------------------
   // Reset and asynchronous pin synchronisers
@@ -62,7 +63,7 @@ module tt_um_parv_b_binner (
   // ---------------------------------------------------------------------------
   // SPI slave and register file
   // ---------------------------------------------------------------------------
-  wire [6:0] rd_addr, wr_addr;
+  wire [6:0] reg_addr;
   wire       wr_stb;
   wire [7:0] wr_data;
   reg  [7:0] rd_data;
@@ -72,59 +73,34 @@ module tt_um_parv_b_binner (
       .clk(clk), .rst_n(rst_sn),
       .sck_in(ui_in[1]), .cs_n_in(ui_in[0]), .mosi_in(ui_in[2]),
       .miso(miso),
-      .addr(rd_addr), .wr_addr(wr_addr), .wr_stb(wr_stb), .wr_data(wr_data),
+      .addr(reg_addr), .wr_stb(wr_stb), .wr_data(wr_data),
       .rd_data(rd_data)
   );
 
-  reg [7:0]  r_scratch;
-  reg [5:0]  r_ctrl;     // RUN, FREE, LFSR_RUN, LFSR_GATED, FMAX_EN, FMAX_INV
-  reg [4:0]  r_srca, r_srcb;
-  reg [3:0]  r_pindiv;
-  reg [15:0] r_gate;
-  reg [2:0]  r_dtap;
-  reg [5:0]  r_dbg;      // [2:0] debug byte select, [5:3] uo_out[7] bit select
-  reg        r_uiooe;
-  reg        c_start, c_clear, c_reseed, c_fclr;   // one-cycle command pulses
+  reg [6:0]  r_ctrl;     // RUN, FREE, LFSR_RUN, LFSR_GATED, FMAX_EN, FMAX_INV, UIOOE
+  reg [7:0]  r_srca;     // [4:0] SRCA, [7:5] DTAP
+  reg [7:0]  r_srcb;     // [4:0] SRCB, [7:5] DBG (debug byte select)
+  reg [7:0]  r_timing;   // [3:0] GEXP (gate = 2^GEXP clk cycles), [7:4] PINDIV
+  // CMD (0x07) bits are one-cycle pulses taken straight from the write strobe.
+  wire       cmd_wr   = wr_stb & (reg_addr == 7'h07);
+  wire       c_start  = cmd_wr & wr_data[0];
+  wire       c_clear  = cmd_wr & wr_data[1];
+  wire       c_reseed = cmd_wr & wr_data[2];
+  wire       c_fclr   = cmd_wr & wr_data[3];
 
-  wire wr_ctrl = wr_stb;
   always @(posedge clk or negedge rst_sn) begin
     if (!rst_sn) begin
-      r_scratch <= 8'h00;
-      r_ctrl    <= 6'd0;
-      r_srca    <= 5'd0;
-      r_srcb    <= 5'd8;
-      r_pindiv  <= 4'd5;
-      r_gate    <= 16'h0400;
-      r_dtap    <= 3'd0;
-      r_dbg     <= 6'd0;
-      r_uiooe   <= 1'b0;
-      c_start   <= 1'b0;
-      c_clear   <= 1'b0;
-      c_reseed  <= 1'b0;
-      c_fclr    <= 1'b0;
+      r_ctrl   <= 7'd0;
+      r_srca   <= 8'h00;
+      r_srcb   <= 8'h08;
+      r_timing <= 8'h5A;   // PINDIV = 5, GEXP = 10 (gate 1024 cycles)
     end else begin
-      c_start  <= 1'b0;
-      c_clear  <= 1'b0;
-      c_reseed <= 1'b0;
-      c_fclr   <= 1'b0;
-      if (wr_ctrl) begin
-        case (wr_addr)
-          7'h03: r_scratch     <= wr_data;
-          7'h04: r_ctrl        <= wr_data[5:0];
-          7'h05: r_srca        <= wr_data[4:0];
-          7'h06: r_srcb        <= wr_data[4:0];
-          7'h07: r_pindiv      <= wr_data[3:0];
-          7'h08: r_gate[7:0]   <= wr_data;
-          7'h09: r_gate[15:8]  <= wr_data;
-          7'h0A: r_dtap        <= wr_data[2:0];
-          7'h0B: r_dbg         <= wr_data[5:0];
-          7'h0C: r_uiooe       <= wr_data[0];
-          7'h0F: begin
-            c_start  <= wr_data[0];
-            c_clear  <= wr_data[1];
-            c_reseed <= wr_data[2];
-            c_fclr   <= wr_data[3];
-          end
+      if (wr_stb) begin
+        case (reg_addr)
+          7'h03: r_ctrl   <= wr_data[6:0];
+          7'h04: r_srca   <= wr_data;
+          7'h05: r_srcb   <= wr_data;
+          7'h06: r_timing <= wr_data;
           default: ;
         endcase
       end
@@ -137,12 +113,17 @@ module tt_um_parv_b_binner (
   wire ctl_lgate = r_ctrl[3];
   wire ctl_fen   = r_ctrl[4];
   wire ctl_finv  = r_ctrl[5];
+  wire ctl_uiooe = r_ctrl[6];
+  wire [2:0] r_dtap   = r_srca[7:5];
+  wire [2:0] r_dbg    = r_srcb[7:5];
+  wire [3:0] r_gexp   = r_timing[3:0];
+  wire [3:0] r_pindiv = r_timing[7:4];
 
   // ---------------------------------------------------------------------------
   // Source selection (SPI registers, or pins in pin-strap mode)
   // ---------------------------------------------------------------------------
-  wire [4:0] src_a = pinmode ? (ui_in[7] ? {2'b10, ui_in[6:4]} : {2'b00, ui_in[6:4]}) : r_srca;
-  wire [4:0] src_b = pinmode ? {2'b01, ui_in[6:4]} : r_srcb;
+  wire [4:0] src_a = pinmode ? (ui_in[7] ? {2'b10, ui_in[6:4]} : {2'b00, ui_in[6:4]}) : r_srca[4:0];
+  wire [4:0] src_b = pinmode ? {2'b01, ui_in[6:4]} : r_srcb[4:0];
   wire       run   = ena & (ctl_run | pinmode);
 
   // ---------------------------------------------------------------------------
@@ -163,7 +144,7 @@ module tt_um_parv_b_binner (
 
   binner_ring #(.N(N_STG), .KIND(1), .IDX(16)) u_ring_nand (.en(ren[16]), .out(src[16]));
   binner_ring #(.N(N_STG), .KIND(2), .IDX(17)) u_ring_nor  (.en(ren[17]), .out(src[17]));
-  binner_ring #(.N(N_STG), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]));
+  binner_ring #(.N(N_FO4), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]));
 
   // Delay chain: Fmax path, or ring when selected as a source.
   wire [7:0] dtaps;
@@ -189,7 +170,7 @@ module tt_um_parv_b_binner (
   // Paired counters and measurement controller
   // ---------------------------------------------------------------------------
   wire        cnt_en, ring_clr, running;
-  wire [15:0] cnt_a, cnt_b, cap_a, cap_b;
+  wire [15:0] cnt_a, cnt_b;
   wire        ovf_a, ovf_b, ack_a_raw, ack_b_raw;
   wire [6:0]  mstat;
   wire [1:0]  ack_sync;
@@ -202,11 +183,10 @@ module tt_um_parv_b_binner (
 
   binner_meas u_meas (
       .clk(clk), .rst_n(rst_sn),
-      .start(c_start), .clear(c_clear), .gate(r_gate), .free_run(ctl_free | pinmode),
-      .ack_a_raw(ack_a_raw), .ack_b_raw(ack_b_raw),
-      .cnt_a(cnt_a), .cnt_b(cnt_b), .ovf_a(ovf_a), .ovf_b(ovf_b),
+      .start(c_start), .clear(c_clear), .gexp(r_gexp), .free_run(ctl_free | pinmode),
+      .ack_a_raw(ack_a_raw), .ack_b_raw(ack_b_raw), .ovf_a(ovf_a), .ovf_b(ovf_b),
       .cnt_en(cnt_en), .ring_clr(ring_clr), .running(running),
-      .cap_a(cap_a), .cap_b(cap_b), .status(mstat), .ack_sync(ack_sync)
+      .status(mstat), .ack_sync(ack_sync)
   );
 
   // ---------------------------------------------------------------------------
@@ -236,31 +216,28 @@ module tt_um_parv_b_binner (
   wire [7:0] status = {f_armed, mstat};
   wire [7:0] misc   = {ring_clr, cnt_en, ena, f_valid, fmax_pin, ack_sync, pinmode};
 
+  // CNTA/CNTB read the ring-domain counters directly. They are static from
+  // DONE until the next START/CLEAR (handshake in binner_meas); in FREE mode
+  // they are live and the read is debug-only.
   always @(*) begin
-    case (rd_addr)
+    case (reg_addr)
       7'h00: rd_data = ID0;
       7'h01: rd_data = ID1;
       7'h02: rd_data = VER;
-      7'h03: rd_data = r_scratch;
-      7'h04: rd_data = {2'b00, r_ctrl};
-      7'h05: rd_data = {3'b000, r_srca};
-      7'h06: rd_data = {3'b000, r_srcb};
-      7'h07: rd_data = {4'h0, r_pindiv};
-      7'h08: rd_data = r_gate[7:0];
-      7'h09: rd_data = r_gate[15:8];
-      7'h0A: rd_data = {5'd0, r_dtap};
-      7'h0B: rd_data = {2'b00, r_dbg};
-      7'h0C: rd_data = {7'd0, r_uiooe};
-      7'h10: rd_data = status;
-      7'h11: rd_data = cap_a[7:0];
-      7'h12: rd_data = cap_a[15:8];
-      7'h13: rd_data = cap_b[7:0];
-      7'h14: rd_data = cap_b[15:8];
-      7'h15: rd_data = lfsr[7:0];
-      7'h16: rd_data = lfsr[15:8];
-      7'h17: rd_data = f_fail;
-      7'h18: rd_data = f_cap;
-      7'h19: rd_data = misc;
+      7'h03: rd_data = {1'b0, r_ctrl};
+      7'h04: rd_data = r_srca;
+      7'h05: rd_data = r_srcb;
+      7'h06: rd_data = r_timing;
+      7'h08: rd_data = status;
+      7'h09: rd_data = cnt_a[7:0];
+      7'h0A: rd_data = cnt_a[15:8];
+      7'h0B: rd_data = cnt_b[7:0];
+      7'h0C: rd_data = cnt_b[15:8];
+      7'h0D: rd_data = lfsr[7:0];
+      7'h0E: rd_data = lfsr[15:8];
+      7'h0F: rd_data = f_fail;
+      7'h10: rd_data = f_cap;
+      7'h11: rd_data = misc;
       default: rd_data = 8'h00;
     endcase
   end
@@ -270,11 +247,11 @@ module tt_um_parv_b_binner (
   // ---------------------------------------------------------------------------
   reg [7:0] dbg_byte;
   always @(*) begin
-    case (r_dbg[2:0])
+    case (r_dbg)
       3'd0: dbg_byte = lfsr[7:0];
       3'd1: dbg_byte = lfsr[15:8];
-      3'd2: dbg_byte = cap_a[7:0];
-      3'd3: dbg_byte = cap_b[7:0];
+      3'd2: dbg_byte = cnt_a[7:0];
+      3'd3: dbg_byte = cnt_b[7:0];
       3'd4: dbg_byte = status;
       3'd5: dbg_byte = f_fail;
       3'd6: dbg_byte = misc;
@@ -289,10 +266,10 @@ module tt_um_parv_b_binner (
   assign uo_out[4] = mstat[0];      // BUSY
   assign uo_out[5] = |f_fail;
   assign uo_out[6] = mstat[1];      // DONE
-  assign uo_out[7] = dbg_byte[r_dbg[5:3]];
+  assign uo_out[7] = f_armed;       // confirms Fmax arming while at speed
 
   assign uio_out = dbg_byte;
-  assign uio_oe  = {8{r_uiooe}};
+  assign uio_oe  = {8{ctl_uiooe}};
 
   wire _unused = &{uio_in, 1'b0};
 

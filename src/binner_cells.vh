@@ -18,6 +18,7 @@
 `define BINNER_CELLS_VH
 
 `define BINNER_INV1    gf180mcu_fd_sc_mcu7t5v0__inv_1
+`define BINNER_BUF1    gf180mcu_fd_sc_mcu7t5v0__buf_1
 `define BINNER_NAND2   gf180mcu_fd_sc_mcu7t5v0__nand2_1
 `define BINNER_NOR2    gf180mcu_fd_sc_mcu7t5v0__nor2_1
 `define BINNER_MUX2    gf180mcu_fd_sc_mcu7t5v0__mux2_2

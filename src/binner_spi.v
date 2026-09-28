@@ -26,10 +26,9 @@ module binner_spi (
     input  wire       mosi_in,
     output reg        miso,
     // register-file port
-    output reg  [6:0] addr,     // read address
-    output reg  [6:0] wr_addr,  // write address (valid with wr_stb)
-    output reg        wr_stb,   // one-cycle write strobe
-    output reg  [7:0] wr_data,
+    output reg  [6:0] addr,     // register address (read and write)
+    output wire       wr_stb,   // one-cycle write strobe (combinational from flops)
+    output wire [7:0] wr_data,  // valid with wr_stb
     input  wire [7:0] rd_data   // combinational read of reg[addr]
 );
   wire sck, cs_n, mosi;
@@ -39,46 +38,51 @@ module binner_spi (
 
   reg       sck_d;
   reg [2:0] bitcnt;
-  reg [6:0] sr;       // bits received so far in the current byte
+  reg [7:0] sr;       // shared shift register: MOSI in at LSB, MISO out from MSB
   reg       first;    // next complete byte is the command byte
   reg       is_wr;
-  reg       ld;       // load tx from rd_data on the next cycle
-  reg [7:0] tx;
+  reg       ld;       // load sr from rd_data on the next cycle
 
   wire sck_rise = sck & ~sck_d;
   wire sck_fall = ~sck & sck_d;
-  wire [7:0] byte_in = {sr, mosi};
+  wire [7:0] byte_in = {sr[6:0], mosi};
 
+  // Write port: a data byte completes on this clk edge. The register file
+  // samples wr_data at addr on the same edge that increments addr. All inputs
+  // are flops, so the strobe is a clean one-cycle pulse in the clk domain.
+  assign wr_stb  = ~cs_n & sck_rise & (bitcnt == 3'd7) & ~first & is_wr;
+  assign wr_data = byte_in;
+
+  // Mode 0: the slave samples MOSI on rising SCK and changes MISO on falling
+  // SCK. One 8-bit register does both: each rising edge shifts MOSI in at the
+  // LSB; each falling edge copies the MSB to the MISO flop. After a complete
+  // byte, sr is reloaded with the read data for the next byte (0 for writes),
+  // before the next falling edge (guaranteed by f_SCK <= f_clk/8).
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
       sck_d   <= 1'b0;
       bitcnt  <= 3'd0;
-      sr      <= 7'd0;
+      sr      <= 8'd0;
       first   <= 1'b1;
       is_wr   <= 1'b0;
       ld      <= 1'b0;
-      tx      <= 8'd0;
       miso    <= 1'b0;
       addr    <= 7'd0;
-      wr_addr <= 7'd0;
-      wr_stb  <= 1'b0;
-      wr_data <= 8'd0;
     end else begin
       sck_d  <= sck;
-      wr_stb <= 1'b0;
       if (cs_n) begin
         bitcnt <= 3'd0;
         first  <= 1'b1;
         ld     <= 1'b0;
-        tx     <= 8'd0;
+        sr     <= 8'd0;
         miso   <= 1'b0;
       end else begin
         if (ld) begin
-          tx <= is_wr ? 8'd0 : rd_data;
+          sr <= is_wr ? 8'd0 : rd_data;
           ld <= 1'b0;
         end
         if (sck_rise) begin
-          sr     <= byte_in[6:0];
+          sr     <= byte_in;
           bitcnt <= bitcnt + 3'd1;
           if (bitcnt == 3'd7) begin
             ld <= 1'b1;
@@ -87,19 +91,11 @@ module binner_spi (
               is_wr <= byte_in[7];
               addr  <= byte_in[6:0];
             end else begin
-              if (is_wr) begin
-                wr_stb  <= 1'b1;
-                wr_addr <= addr;
-                wr_data <= byte_in;
-              end
-              addr <= addr + 7'd1;
+              addr <= addr + 7'd1;   // after the write below has used addr
             end
           end
         end
-        if (sck_fall) begin
-          miso <= tx[7];
-          tx   <= {tx[6:0], 1'b0};
-        end
+        if (sck_fall) miso <= sr[7];
       end
     end
   end

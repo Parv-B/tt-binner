@@ -9,7 +9,10 @@
  * resizer leaves them alone (RSZ_DONT_TOUCH_RX in src/config.json).
  *
  * KIND 0 (INV) : stage 0 = NAND2(loop, en); stages 1..N-1 = INV_1
- * KIND 1 (NAND): every stage = NAND2(A1 = loop, A2 = en)
+ * KIND 1 (NAND): every stage = NAND2(A1 = loop, A2 = en_buf); en_buf comes from a
+ *                hand-instantiated BUF_1 so the enable net seen by the flow has
+ *                fan-out 1 (the resizer cannot buffer nets whose loads are all
+ *                dont-touch pins: RSZ-3006, found in the first CI harden).
  * KIND 2 (NOR) : every stage = NOR2 (A1 = loop, A2 = en_b)
  * KIND 3 (FO4) : as INV, and every stage output also drives 3 dummy INV_1 loads
  *
@@ -67,6 +70,7 @@ module binner_ring #(
   /* verilator lint_off UNOPTFLAT */  // the ring loop is intentional
   (* keep *) wire [N-1:0] ring_notouch_;   // stage outputs
   wire                    en_b_notouch_;
+  wire                    en_buf_notouch_;
 
   /* verilator lint_off PINMISSING */
   genvar i;
@@ -77,10 +81,15 @@ module binner_ring #(
       assign en_b_notouch_ = 1'b0;
       wire _unused_enb = en_b_notouch_;
     end
+    if (KIND == 1) begin : g_enbuf
+      (* keep *) `BINNER_BUF1 enbuf_notouch_ (.I(en), .Z(en_buf_notouch_));
+    end else begin : g_noenbuf
+      assign en_buf_notouch_ = en;
+    end
     for (i = 0; i < N; i = i + 1) begin : g_stg
       wire prev = (i == 0) ? ring_notouch_[N-1] : ring_notouch_[(i == 0) ? 0 : i-1];
       if (KIND == 1) begin : g_nand
-        (* keep *) `BINNER_NAND2 stg_notouch_ (.A1(prev), .A2(en), .ZN(ring_notouch_[i]));
+        (* keep *) `BINNER_NAND2 stg_notouch_ (.A1(prev), .A2(en_buf_notouch_), .ZN(ring_notouch_[i]));
       end else if (KIND == 2) begin : g_nor
         (* keep *) `BINNER_NOR2 stg_notouch_ (.A1(prev), .A2(en_b_notouch_), .ZN(ring_notouch_[i]));
       end else begin : g_inv

@@ -27,9 +27,12 @@
  * The comparison is enabled three cycles after arming (pipeline fill) and
  * stops as soon as arm_lvl falls.
  *
- * The launch and capture flops are hand-instantiated DFFRNQ cells whose names
- * contain "notouch_"; binner.sdc declares the paths into the capture flops
- * false (they are slow on purpose), and the resizer leaves them alone.
+ * The launch and capture flops are hand-instantiated DFFRNQ cells named
+ * "*_keep_" (kept by synthesis, predictable names for binner.sdc, which
+ * declares the paths into the capture flops false because they are slow on
+ * purpose). They are deliberately NOT "notouch_": their clock and reset pins sit
+ * on high-fanout nets that the resizer and CTS must be free to buffer (see
+ * DECISIONS.md D-DONTTOUCH). The chain nets they sample ARE notouch_.
  */
 
 `default_nettype none
@@ -70,11 +73,11 @@ module binner_fmax (
   assign cap_raw = cap_q;
 `else
   /* verilator lint_off PINMISSING */
-  (* keep *) `BINNER_DFFRN flaunch_notouch_ (.CLK(clk), .D(launch_d), .RN(rst_n), .Q(launch));
+  (* keep *) `BINNER_DFFRN flaunch_keep_ (.CLK(clk), .D(launch_d), .RN(rst_n), .Q(launch));
   genvar i;
   generate
     for (i = 0; i < 8; i = i + 1) begin : g_cap
-      (* keep *) `BINNER_DFFRN fcap_notouch_ (.CLK(clk), .D(taps[i]), .RN(rst_n), .Q(cap_raw[i]));
+      (* keep *) `BINNER_DFFRN fcap_keep_ (.CLK(clk), .D(taps[i]), .RN(rst_n), .Q(cap_raw[i]));
     end
   endgenerate
   /* verilator lint_on PINMISSING */

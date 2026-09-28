@@ -66,22 +66,23 @@ async def test_smoke(dut):
     assert int(dut.uio_oe.value) == 0, "uio must be inputs after reset"
 
     ids = await rd(dut, 0x00, 3)
-    assert ids == [0x42, 0x4E, 0x01], f"ID/VER readback {ids}"
+    assert ids == [0x42, 0x4E, 0x02], f"ID/VER readback {ids}"
 
-    await wr(dut, 0x03, 0xA5)
-    assert await rd(dut, 0x03) == 0xA5
-
-    # clk/2 known answer on both channels, rings off (CTRL.RUN = 0)
-    await wr(dut, 0x05, 20, 20)          # SRCA = SRCB = clk/2
-    await wr(dut, 0x08, 200, 0)          # GATE = 200
-    await wr(dut, 0x0F, 0x01)            # START
-    for _ in range(100):
-        st = await rd(dut, 0x10)
+    # SRCA/SRCB registers (0x04/0x05) carry the 5-bit source in bits[4:0]
+    await wr(dut, 0x04, 20)              # SRCA = clk/2
+    await wr(dut, 0x05, 20)              # SRCB = clk/2
+    assert (await rd(dut, 0x04)) & 0x1F == 20
+    # GEXP = 7 -> gate = 128 clk cycles (0x06 low nibble)
+    await wr(dut, 0x06, 0x07)
+    await wr(dut, 0x03, 0x01)            # CTRL.RUN = 1
+    await wr(dut, 0x07, 0x01)            # CMD.START
+    for _ in range(300):
+        st = await rd(dut, 0x08)
         if st & 0x02:
             break
     assert st & 0x02, f"measurement did not complete, STATUS={st:#x}"
-    cap = await rd(dut, 0x11, 4)
-    ca, cb = cap[0] | cap[1] << 8, cap[2] | cap[3] << 8
-    dut._log.info(f"STATUS={st:#04x} CAPA={ca} CAPB={cb}")
-    assert abs(ca - 100) <= 1 and abs(cb - 100) <= 1
+    ca = (await rd(dut, 0x09)) | (await rd(dut, 0x0A)) << 8
+    cb = (await rd(dut, 0x0B)) | (await rd(dut, 0x0C)) << 8
+    dut._log.info(f"STATUS={st:#04x} CNTA={ca} CNTB={cb}")
+    assert abs(ca - 64) <= 1 and abs(cb - 64) <= 1
     assert st & 0x30 == 0x30, "both channels must acknowledge"
