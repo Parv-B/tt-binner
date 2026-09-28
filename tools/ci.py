@@ -11,6 +11,8 @@ Usage:
   python tools/ci.py fetch  [--sha SHA|--branch BR] [--out DIR] [--name ART ...]
   python tools/ci.py jobs   RUN_ID                       # job/step conclusions
   python tools/ci.py log    JOB_ID [--tail N]            # job log tail
+  python tools/ci.py rerun  RUN_ID                       # re-run failed jobs once (flaky CI)
+  python tools/ci.py dispatch WORKFLOW.yaml REF          # workflow_dispatch
 """
 import argparse
 import io
@@ -111,6 +113,17 @@ def cmd_log(a):
         print(line)
 
 
+def cmd_rerun(a):
+    """Re-run only the failed jobs of a run (TT CI is occasionally flaky: rerun once before debugging)."""
+    r = S.post(f"{API}/repos/{REPO}/actions/runs/{a.run_id}/rerun-failed-jobs")
+    print(r.status_code)
+
+
+def dispatch(workflow, ref):
+    r = S.post(f"{API}/repos/{REPO}/actions/workflows/{workflow}/dispatches", json={"ref": ref})
+    print(r.status_code)
+
+
 def cmd_fetch(a):
     sha = resolve_sha(a)
     out = a.out or os.path.join("ci_artifacts", sha[:10])
@@ -147,12 +160,18 @@ def main():
             s.add_argument("--name", nargs="*")
     s = sub.add_parser("jobs")
     s.add_argument("run_id")
+    s = sub.add_parser("rerun")
+    s.add_argument("run_id")
+    s = sub.add_parser("dispatch")
+    s.add_argument("workflow")
+    s.add_argument("ref")
     s = sub.add_parser("log")
     s.add_argument("job_id")
     s.add_argument("--tail", type=int, default=80)
     a = p.parse_args()
     {"status": cmd_status, "wait": cmd_wait, "fetch": cmd_fetch,
-     "jobs": cmd_jobs, "log": cmd_log}[a.cmd](a)
+     "jobs": cmd_jobs, "log": cmd_log, "rerun": cmd_rerun,
+     "dispatch": lambda a: dispatch(a.workflow, a.ref)}[a.cmd](a)
 
 
 if __name__ == "__main__":
