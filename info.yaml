@@ -5,7 +5,7 @@ project:
   discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "Ring-oscillator bank, paired counters, at-speed Fmax taps and LFSR self-test for post-silicon variation characterization"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     10000000       # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 340x160 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 3x4 or 4x4
@@ -18,39 +18,47 @@ project:
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "project.v"
+    - "binner_ring.v"
+    - "binner_dchain.v"
+    - "binner_rcnt.v"
+    - "binner_sync.v"
+    - "binner_lfsr.v"
+    - "binner_spi.v"
+    - "binner_meas.v"
+    - "binner_fmax.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: "A0"
-  ui[1]: "A1"
-  ui[2]: "A2"
-  ui[3]: "A3"
-  ui[4]: "A4"
-  ui[5]: "A5"
-  ui[6]: "A6"
-  ui[7]: "A7"
+  ui[0]: "SPI CS_N"
+  ui[1]: "SPI SCK"
+  ui[2]: "SPI MOSI"
+  ui[3]: "PINMODE"
+  ui[4]: "PM_SEL0"
+  ui[5]: "PM_SEL1"
+  ui[6]: "PM_SEL2"
+  ui[7]: "FMAX_RUN / PM_BANK"
 
   # Outputs
-  uo[0]: "SUM0"
-  uo[1]: "SUM1"
-  uo[2]: "SUM2"
-  uo[3]: "SUM3"
-  uo[4]: "SUM4"
-  uo[5]: "SUM5"
-  uo[6]: "SUM6"
-  uo[7]: "SUM7"
+  uo[0]: "LFSR_OUT"
+  uo[1]: "CHA_DIV"
+  uo[2]: "CHB_DIV"
+  uo[3]: "SPI MISO"
+  uo[4]: "BUSY"
+  uo[5]: "FMAX_FAIL"
+  uo[6]: "DONE"
+  uo[7]: "DBG_BIT"
 
   # Bidirectional pins
-  uio[0]: "B0"
-  uio[1]: "B1"
-  uio[2]: "B2"
-  uio[3]: "B3"
-  uio[4]: "B4"
-  uio[5]: "B5"
-  uio[6]: "B6"
-  uio[7]: "B7"
+  uio[0]: "DBG0"
+  uio[1]: "DBG1"
+  uio[2]: "DBG2"
+  uio[3]: "DBG3"
+  uio[4]: "DBG4"
+  uio[5]: "DBG5"
+  uio[6]: "DBG6"
+  uio[7]: "DBG7"
 
 # Do not change!
 yaml_version: 6

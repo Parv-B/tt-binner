@@ -31,6 +31,14 @@
   "//": "https://tinytapeout.com/faq/#how-can-i-map-an-additional-external-clock-to-one-of-the-gpios",
   "CLOCK_PORT": "clk",
 
+  "//": "BINNER: never buffer or resize ring-oscillator, delay-chain or Fmax capture cells/nets.",
+  "//": "Every such instance and net name contains 'notouch_' (src/binner_cells.vh).",
+  "//": "tools/netlist_audit.py verifies the result on the post-route netlist. See DECISIONS.md D-DONTTOUCH.",
+  "RSZ_DONT_TOUCH_RX": "notouch_",
+
+  "//": "BINNER: base.sdc plus false paths into the Fmax capture flops. See DECISIONS.md D-SDC.",
+  "FALLBACK_SDC_FILE": "dir::binner.sdc",
+
   "//": "Configuration docs: https://librelane.readthedocs.io/en/latest/reference/configuration.html",
 
   "//": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",

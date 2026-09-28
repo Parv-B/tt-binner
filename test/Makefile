@@ -3,15 +3,20 @@
 
 # defaults
 SIM ?= icarus
+# femtosecond precision for the behavioural ring/delay models
+COCOTB_HDL_TIMEUNIT ?= 1ns
+COCOTB_HDL_TIMEPRECISION ?= 1fs
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v
+PROJECT_SOURCES = project.v binner_ring.v binner_dchain.v binner_rcnt.v binner_sync.v binner_lfsr.v binner_spi.v binner_meas.v binner_fmax.v
 
 ifneq ($(GATES),yes)
 
-# RTL simulation:
+# RTL simulation (ring oscillators and delay chain replaced by behavioural
+# models with plusarg-controlled delays, see docs/SPEC.md section 8):
 SIM_BUILD				= sim_build/rtl
+COMPILE_ARGS    += -DBINNER_BEHAV
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
 else
