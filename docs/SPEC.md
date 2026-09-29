@@ -30,7 +30,7 @@ Pin-strap mode needs no SPI at all: the rings, counters and LFSR run from pins a
 - `rst_n` is asserted asynchronously and released synchronously (2 flops). Every flop has a reset. After reset, all rings are off and uio pins are inputs.
 - The tile is power-gated by the TT mux. State is lost when it is deselected, so always reset after selecting it.
 - SPI is oversampled in the clk domain: **f_SCK ≤ f_clk/8** (use ≤ f_clk/16).
-- Ring measurements: any clk from 1 to 50 MHz. The Fmax sweep changes clk; see §6.
+- Ring measurements and all normal register/control-plane operation: any clk from 1 Hz to 20 MHz (signoff target; verified across tt/ss/ff corners — see DECISIONS.md D-CLOCK-PERIOD). The Fmax sweep raises clk far above this (up to ~125 MHz, the demo board's practical ceiling) but only the launch flop and sticky-fail logic need to function there; no SPI transaction happens while clk is swept (see §6 step-by-step) and the Fmax capture flops are exempted from setup timing by design (they are meant to fail at speed). Do not perform SPI reads/writes while clk is above 20 MHz.
 
 ## 3. SPI protocol (mode 0: CPOL=0, CPHA=0; MSB first)
 CS_N goes low, then byte 0 = `{W, A[6:0]}` (W=1 write, W=0 read), then data bytes, then CS_N goes high.
