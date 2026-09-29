@@ -163,3 +163,107 @@ options 1-3 meaningfully change what silicon ships and what data it can produce.
 - **3 max-fanout violations present at every corner** (structural, not corner-dependent;
   `metrics.csv` does not name the net(s)). Not currently gating CI. To be identified and
   assessed once the netlist-audit/timing-report tooling can name the specific net(s).
+
+## D-STRUCT-NAND-ARTIFACT — `make struct` NAND-ring anomaly traced to an Icarus `-gspecify` simulation artifact, not a design defect (2026-09-30)
+
+**Finding reported.** The verification engineer's `make struct` target (real GF180MCU PDK
+cell models, real specify-block timing, no behavioural shortcut — see
+`test/COVERAGE.md` item 9) measured the NAND characterization ring (source 16) at a
+2.00 ns period instead of the expected 50.00 ns (25 stages x 2 x 1.0 ns arc), with all 25
+`ring_notouch_` stage outputs toggling in perfect lockstep every 1 ns — i.e. behaving as
+one stage, not a 25-stage traveling wave. The otherwise-identical INV ring (source 0/1,
+same stage count, same cell library, only stage 0 gated by `en` instead of all 25) measured
+correctly (50.00 ns) in the same run. The reported repro was deterministic.
+
+**Why this mattered enough to investigate personally, not just log.** The NAND ring is a
+MUST-block characterization structure whose entire purpose is the NAND/INV frequency
+ratio (N/P-skew signature, a headline "novel, publishable" deliverable). A genuine 25x
+oscillation-mode defect would be a real silicon-functionality risk (priority #1) and
+would invalidate that data (priority #2).
+
+**Investigation.** Independently reproduced with a standalone diagnostic testbench
+(force-based, bypassing cocotb/SPI) against the same PDK models:
+1. An isolated 3-cell probe (`buf_1`, `inv_1`, `nand2_1` alone, no ring, no clock) showed
+   that **with `-gspecify`**, none of these cells ever resolve their output from `X`, even
+   given a stable known-0 input held for 10 ns and then an explicit 0->1->0 transition.
+   **Without `-gspecify`**, the identical probe resolves correctly and instantly
+   (`y_inv=1`, `y_nand=1` etc., as expected). This isolates the X-stuck behaviour to
+   Icarus's `-gspecify` path-delay engine interacting with these cells' `_func`
+   submodules (confirmed by reading the PDK source directly: `inv_func` is a plain
+   built-in `not` gate -- `not MGM_BG_0(ZN, I);` -- with no dependency on power pins or
+   anything else that should block X-resolution under normal 4-value simulation rules).
+2. A second probe, using the full design (not isolated cells) and the exact same simple
+   force-based enable sequence for **both** source 0 (INV, known-good per the reported
+   test) and source 16 (NAND, reported broken): **both** got stuck at permanent `X`,
+   never producing any edge at all. This proves the X-stuck failure mode is not specific
+   to the NAND ring's topology -- a simplified enable sequence gets the *already-confirmed-
+   working* INV ring stuck too. Icarus's `-gspecify` value propagation here is evidently
+   sensitive to the exact history of prior signal transitions (plausibly some internal
+   notifier/IO-path-enable state that the real cocotb test's much longer SPI-bit-banged
+   enable sequence happens to satisfy for the INV ring's specific structure/timing but
+   apparently does not correctly satisfy for the NAND ring's, producing a defined but
+   wrong answer instead of X). This is a known category of Icarus specify-mode
+   limitation, not a documented, precise root cause here.
+3. **Independent cross-check via real post-route SDF** (`tools/sdf_predict.py`, computed
+   from actual OpenROAD/OpenSTA delay calculation on the hardened layout -- a
+   fundamentally different mechanism with no dynamic-simulation X-propagation/notifier
+   machinery to glitch): the NAND ring's predicted frequency is well-behaved and
+   physically sensible at every corner, e.g. at nom_tt: INV rings ~4.1-4.3 GHz, NAND ring
+   6.5 GHz (i.e. NAND/INV ratio 0.65-0.69 at max_ff, consistently well below 1 everywhere
+   -- the NAND ring is *slower* than the INV ring, exactly as expected since a NAND2 gate's
+   intrinsic delay exceeds an INV1's). There is no trace of a 25x-too-fast or lockstep
+   signature anywhere in the SDF-based prediction. SDF-based static delay calculation is
+   structurally incapable of producing a "dynamic lockstep artifact" the way an event-
+   driven gate-level simulator with fragile X-resolution can -- it just sums real timing
+   arcs around the loop.
+
+**Conclusion.** The `make struct` finding is best explained as an Icarus `-gspecify`
+simulation artifact specific to this crude, uniform-1.0ns-per-arc placeholder PDK timing
+model (confirmed non-representative of real silicon timing; see
+`test/COVERAGE.md` item 9 and `tools/sdf_predict.py`'s own header), not a real defect in
+the NAND ring's netlist or its expected silicon behaviour. The real post-route SDF --
+the best pre-silicon timing evidence this project has for actual device delays -- shows
+the ring behaving exactly as designed.
+
+**Residual, appropriately downgraded risk.** SDF-based static analysis assumes steady-
+state oscillation and cannot model transient startup behaviour at enable time, so it
+does not, by itself, disprove a genuine *transient* synchronized-lockstep start-up mode
+(my original hypothesis before finding the simpler X-stuck explanation above). On real
+silicon this remains extremely unlikely: ring oscillators with N nominally-identical
+stages are well known (this is the entire physical basis of RO-PUFs, including this
+project's own PUF rings) to have inherent device-to-device mismatch that reliably breaks
+any transient synchronized-switching symmetry within the first few cycles, long before
+the measurement window (many GEXP cycles) begins. No RTL change is being made on the
+strength of a single crude-model Icarus simulation artifact that direct SDF cross-check
+contradicts. Flagged here, not silently dismissed, so a second independent method (e.g.
+a transistor-level or Verilator-based check, or direct silicon measurement once chips
+arrive) can close it out definitively if anyone wants stronger confirmation later.
+
+## D-DTAP-RETUNE -- delay-chain ring requires disabling before changing DTAP (2026-09-30)
+
+**Finding.** The same `make struct` investigation found the delay-chain ring (source 19)
+at DTAP=4 measuring a spurious 9.00 ns period instead of the expected 26.00 ns, but
+*only* when reached via a live retune (DTAP 0->1->2->3->4 in sequence without disabling
+the ring between changes, mirroring a plausible real characterization sweep). Enabling
+directly at DTAP=4 from cold measured a clean, jitter-free 26.0 ns every time; an
+isolated single live retune (3->4) also settled cleanly in isolation. The anomaly is
+sensitive to the exact accumulated simulation-time phase at which the async tap-select
+mux switches relative to the free-running ring.
+
+Unlike D-STRUCT-NAND-ARTIFACT above, this is *not* contradicted by any independent
+evidence, and is physically plausible regardless of simulator quirks: `binner_dchain.v`'s
+tap-select mux (`tap_sel`) is a purely asynchronous combinational tree in the middle of a
+live feedback loop when `ring_mode=1`. Switching it while the loop is actively
+oscillating is a textbook async-mux-in-a-loop hazard (a glitch during the mux's own
+settling time can, in principle, propagate around the loop and be re-latched by the very
+edge it caused, mode-locking to an unintended shorter path through the tree) -- this can
+happen on real silicon too, not just in simulation.
+
+**Decision.** Treat "the ring must be disabled while changing DTAP" as a required
+operational precondition, not an RTL bug to fix. `docs/SPEC.md` §5/§6 updated: DTAP must
+be set (via SRCA[7:5]) *before* selecting source 19 and enabling the ring (CTRL.RUN), not
+changed while it is already running; to sweep DTAP, disable (CTRL.RUN=0 or deselect),
+change DTAP, then re-enable. This is a cheap, safe documentation-only fix with no RTL or
+area cost, consistent with "prefer boring, proven solutions wherever silicon risk is
+involved." `bringup/binner_bringup.py`'s Fmax/delay-chain-ring stages should follow this
+sequence; flagged for the bring-up engineer to confirm.

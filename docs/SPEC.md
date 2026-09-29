@@ -63,14 +63,16 @@ Unmapped addresses (0x12-0x7F) read 0x00 and ignore writes. CTRL/SRCA/SRCB/TIMIN
 Debug byte select (SRCB[7:5]): 0 LFSR[7:0], 1 LFSR[15:8], 2 CNTA[7:0], 3 CNTB[7:0], 4 STATUS, 5 FFAIL, 6 MISC, 7 CNTA[15:8].
 
 ## 5. Sources and measurement
-Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (25 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21–31 constant 0.
+Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (13 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21–31 constant 0.
 
 A source ring oscillates only when `ena & (CTRL.RUN | PINMODE)` and it is selected by SRCA or SRCB. At most two rings run at a time.
+
+**Source 19 (delay-chain ring) must not have its tap (SRCA[7:5]/DTAP) changed while it is running.** The tap-select mux is a purely asynchronous combinational tree inside the ring's own live feedback loop; switching it while the ring is oscillating is an async-mux-in-a-loop hazard that can mode-lock the ring onto an unintended shorter path through the tree (observed in simulation: see DECISIONS.md D-DTAP-RETUNE). To change DTAP, disable the ring first (CTRL.RUN=0, or deselect source 19 from both channels), write the new DTAP, then re-enable. This costs one extra measurement cycle per tap and is otherwise free.
 
 Measurement (paired): write SRCA and SRCB, set TIMING.GEXP, set CTRL.RUN, then write CMD.START.
 1. The ring-domain counters are cleared (2 cycles).
 2. Both channels count rising edges of their source for exactly 2^GEXP clk cycles; each count is synchronised into the ring domain with 2 flops, symmetrically at start and stop.
-3. The controller waits for each channel's acknowledge to fall, then copies the counters into CAPA/CAPB and sets DONE.
+3. The controller waits for each channel's acknowledge to fall, then sets DONE; CNTA/CNTB (the ring-domain counters themselves) are then static and readable directly.
 
 Frequency: `f_src = CNT * f_clk / (2^GEXP)`, ±1 count.
 - Known answer: source 20 (clk/2) gives CNT = 2^GEXP/2 ± 1.
