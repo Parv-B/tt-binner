@@ -12,3 +12,6 @@ test/__pycache__/
 test/results.xml
 test/gate_level_netlist.v
 .claude/
+ci_artifacts/
+tools/__pycache__/
+__pycache__/
