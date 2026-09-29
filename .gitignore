@@ -13,3 +13,7 @@ test/results.xml
 test/gate_level_netlist.v
 .claude/
 ci_artifacts/
+__pycache__/
+sim_build/
+*.pyc
+.pytest_cache/
