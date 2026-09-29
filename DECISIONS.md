@@ -94,14 +94,65 @@ to break up the enable net the same way) — the INV/PUF rings' enable is the sh
 `run`/`ren[i]` gating signal that also drives the measurement-controller side and was
 not the failing net.
 
-## Pending / open items
+## D-UTILIZATION — 60% area target is not reachable via the prescribed cut order; flagged for owner input (2026-09-29)
 
-- **Utilization**: 81.68% measured on 908c9e1 (target <=60%). Re-check after
-  D-CLOCK-PERIOD, since a laxer signoff target typically needs less timing-repair
-  buffering (`timing_repair_buffer`: 156 cells / 3428.9 um^2 in the 908c9e1 report). If
-  still over budget, apply the plan's stated cut order: skitter (not built) -> Fmax taps
-  (currently 8) -> characterization-ring variety (INV/NAND/NOR/FO4) -> identical-ring
-  count (currently 16, floor of 8).
+**Re-checked after D-CLOCK-PERIOD** (commit 9692913, `tools/metrics_summary.py` on the
+green re-harden, `docs/reports/9692913/metrics_summary.md`): utilization is **81.98%**,
+essentially unchanged from the pre-fix 81.68% (908c9e1). The clock-period relaxation
+fixed timing (setup WNS/TNS now 0.000 at all 9 corners) but, as hoped, did **not**
+meaningfully reduce area — `timing_repair_buffer` actually grew slightly (156->162
+cells).
+
+**Where the area actually goes** (from the cell-class breakdown, stdcell area = total
+placed area minus filler, 42,604 um^2 of a 51,967 um^2 core):
+
+| category | area (um^2) | share of stdcell area |
+|---|---|---|
+| real logic (combinational + sequential + inverter classes) | 34,438 | 80.8% |
+| CTS/buffering (clock buffers, timing-repair buffers, plain buffers) | 6,270 | 14.7% |
+| structural (endcap/tap/tie cells, fixed by floorplan geometry) | 1,897 | 4.5% |
+
+The "real logic" category is dominated by the register file, source-select muxes and
+measurement FSM (MUST block #2, "Readout and control interface") — not by the ring
+oscillators, delay chain or Fmax logic, which the netlist audit already confirmed are
+built exactly as specified and cost comparatively little area.
+
+**Applying the plan's full prescribed cut order does not reach the target.** Estimated
+savings from doing all of the following: drop the Fmax/at-speed block entirely (~1,900
+um^2), drop the FO4 characterization ring (~430 um^2), halve the 16 identical PUF rings
+to the stated floor of 8 (~1,700 um^2) — about 4,050 um^2 total, or under 10% of the
+overage needed. Resulting utilization would still be about **74%**, not 60%, while
+having sacrificed the at-speed Fmax regression (a SHOULD block) and half the PUF/RO
+population (directly hurting priority #2, "produces novel, publishable... data," and
+priority #3, "maximizes relevance to... yield engineering careers" — the whole point of
+having 16 rings is statistical power for the within-die/PUF analysis).
+
+**What is NOT at risk.** Antenna, DRC and LVS are all clean (0 everywhere) at the
+current 82% packing, and setup/hold timing now close with 0 WNS/TNS at every corner
+(after D-CLOCK-PERIOD). Nothing measured so far ties this utilization number to an
+actual silicon-functionality risk (priority #1) — 60% was this project's own
+self-imposed design margin/aesthetic target, set before any real hardening data existed
+("harden a skeleton early to get real area and flow facts before designing to
+estimates" — a step this build effectively skipped by writing the full MUST-block RTL
+before the first real harden, which is itself worth noting as a process lesson).
+
+**Not unilaterally resolved.** Because reaching 60% would require cutting well past the
+prescribed order into the register/control interface itself (i.e., trading away
+richness in a MUST block) or degrading priorities #2/#3 for a target that is not
+reachable through the sanctioned cuts anyway, this is flagged here rather than acted on.
+Options for the owner to weigh:
+1. Accept the current ~82% utilization (no known functional-risk evidence against it;
+   DRC/antenna/LVS/timing all clean) and treat 60% as a missed aspirational target,
+   documented honestly in the final report.
+2. Apply the full prescribed cut order anyway for whatever partial margin it buys
+   (~74%), accepting the loss of Fmax and half the PUF population.
+3. Accept a smaller, targeted cut (e.g. Fmax taps only, ~1,900 um^2) as a good-faith
+   partial application of the order without touching the ring population, landing
+   around 78-79%.
+Recommendation if a decision is needed before the owner weighs in: option 3, since it
+uses the part of the prescribed order least damaging to priorities #2/#3 while still
+showing area discipline; but no cut is being applied automatically pending input, since
+options 1-3 meaningfully change what silicon ships and what data it can produce.
 - **N/P skew measurement precision**: population-analysis Monte-Carlo validation
   (`analysis/VALIDATION.md`) found the s_n-s_p estimator misses its documented
   ±0.01 target (actual RMSE ~=0.025, at both N=20 and N=8 — a per-die measurement-noise

@@ -1,0 +1,203 @@
+{
+  "csv": "ci_artifacts\\9692913\\tt_submission\\tt_submission\\stats\\metrics.csv",
+  "overview": {
+    "instance_count": 3334,
+    "instance_area_um2": 51967,
+    "stdcell_area_um2": 42604.4,
+    "die_area_um2": 55712,
+    "core_area_um2": 51967,
+    "utilization": 0.819837,
+    "utilization_stdcell": 0.819837,
+    "displacement_total_um": 0,
+    "displacement_mean_um": 0,
+    "displacement_max_um": 0
+  },
+  "classes": [
+    {
+      "class": "buffer",
+      "count": 27,
+      "area_um2": 1268.83
+    },
+    {
+      "class": "clock_buffer",
+      "count": 32,
+      "area_um2": 1286.39
+    },
+    {
+      "class": "endcap_cell",
+      "count": 78,
+      "area_um2": 342.451
+    },
+    {
+      "class": "fill_cell",
+      "count": 1197,
+      "area_um2": 9362.53
+    },
+    {
+      "class": "inverter",
+      "count": 528,
+      "area_um2": 4667
+    },
+    {
+      "class": "multi_input_combinational_cell",
+      "count": 789,
+      "area_um2": 16942.6
+    },
+    {
+      "class": "sequential_cell",
+      "count": 170,
+      "area_um2": 12828.7
+    },
+    {
+      "class": "tap_cell",
+      "count": 348,
+      "area_um2": 1527.86
+    },
+    {
+      "class": "tie_cell",
+      "count": 3,
+      "area_um2": 26.3424
+    },
+    {
+      "class": "timing_repair_buffer",
+      "count": 162,
+      "area_um2": 3714.28
+    }
+  ],
+  "timing_per_corner": [
+    {
+      "corner": "max_ff_n40C_3v60",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 0,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "max_ss_125C_3v00",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 348,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "max_tt_025C_3v30",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 11,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "min_ff_n40C_3v60",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 0,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "min_ss_125C_3v00",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 241,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "min_tt_025C_3v30",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 0,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "nom_ff_n40C_3v60",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 0,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "nom_ss_125C_3v00",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 263,
+      "max_fanout_violations": 3
+    },
+    {
+      "corner": "nom_tt_025C_3v30",
+      "setup_wns_ns": 0.0,
+      "setup_tns_ns": 0.0,
+      "hold_wns_ns": 0,
+      "hold_tns_ns": 0.0,
+      "max_slew_violations": 0,
+      "max_fanout_violations": 3
+    }
+  ],
+  "timing_overall": {
+    "setup_wns_ns": 0.0,
+    "setup_tns_ns": 0.0,
+    "hold_wns_ns": 0,
+    "hold_tns_ns": 0.0,
+    "max_slew_violations": 348,
+    "max_fanout_violations": 3
+  },
+  "drc_antenna_lint": {
+    "antenna_violating_nets": 0,
+    "antenna_violating_pins": 0,
+    "route_antenna_violation_count": 0,
+    "antenna_diodes_count": 0,
+    "route_drc_errors_final": 0,
+    "magic_drc_error_count": 0,
+    "lint_error_count": 0,
+    "lint_warning_count": 1,
+    "lint_timing_construct_count": 0,
+    "inferred_latch_count": 0,
+    "unmapped_cell_count": 0
+  },
+  "route_drc_iterations": [
+    [
+      "route__drc_errors__iter:0",
+      383
+    ],
+    [
+      "route__drc_errors__iter:1",
+      101
+    ],
+    [
+      "route__drc_errors__iter:2",
+      96
+    ],
+    [
+      "route__drc_errors__iter:3",
+      0
+    ]
+  ],
+  "flags": [
+    {
+      "category": "FAIL vs. plan target",
+      "detail": "utilization 81.98% (stdcell area 42604.4 um^2 / core area 51967 um^2) exceeds the project's <=60% design target. The plan's pre-route yosys estimate was ~32.8k um^2; the real post-route stdcell area is 42604.4 um^2 -- 1.3x the estimate."
+    },
+    {
+      "category": "fanout",
+      "detail": "3 max-fanout violation(s), present in every corner (structural, not corner-dependent) -- metrics.csv does not name the offending net(s)."
+    },
+    {
+      "category": "lint (informational)",
+      "detail": "1 lint warning(s) in the synthesised design."
+    }
+  ]
+}
