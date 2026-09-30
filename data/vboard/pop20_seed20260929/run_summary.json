@@ -1,0 +1,150 @@
+{
+ "n": 20,
+ "seed": 20260929,
+ "reduced": true,
+ "jobs": 4,
+ "elapsed_s": 11232.934576034546,
+ "n_ok": 20,
+ "results": [
+  {
+   "chip_id": "sim00",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2428.947587490082,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim00.csv"
+  },
+  {
+   "chip_id": "sim03",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2452.1080663204193,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim03.csv"
+  },
+  {
+   "chip_id": "sim01",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2477.047350168228,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim01.csv"
+  },
+  {
+   "chip_id": "sim02",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2489.5747566223145,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim02.csv"
+  },
+  {
+   "chip_id": "sim04",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2254.515388727188,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim04.csv"
+  },
+  {
+   "chip_id": "sim06",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2249.309109687805,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim06.csv"
+  },
+  {
+   "chip_id": "sim07",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2245.147013902664,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim07.csv"
+  },
+  {
+   "chip_id": "sim05",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2297.0062820911407,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim05.csv"
+  },
+  {
+   "chip_id": "sim11",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2010.0408627986908,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim11.csv"
+  },
+  {
+   "chip_id": "sim10",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2047.975564956665,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim10.csv"
+  },
+  {
+   "chip_id": "sim08",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2152.843980550766,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim08.csv"
+  },
+  {
+   "chip_id": "sim09",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2140.6827023029327,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim09.csv"
+  },
+  {
+   "chip_id": "sim12",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2096.562249183655,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim12.csv"
+  },
+  {
+   "chip_id": "sim13",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2077.1826453208923,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim13.csv"
+  },
+  {
+   "chip_id": "sim14",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2024.64453291893,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim14.csv"
+  },
+  {
+   "chip_id": "sim15",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2178.004330635071,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim15.csv"
+  },
+  {
+   "chip_id": "sim17",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2190.2775616645813,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim17.csv"
+  },
+  {
+   "chip_id": "sim18",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2221.2552649974823,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim18.csv"
+  },
+  {
+   "chip_id": "sim16",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2295.8724863529205,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim16.csv"
+  },
+  {
+   "chip_id": "sim19",
+   "ok": true,
+   "err": "",
+   "elapsed_s": 2187.876175880432,
+   "csv": "/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim19.csv"
+  }
+ ]
+}

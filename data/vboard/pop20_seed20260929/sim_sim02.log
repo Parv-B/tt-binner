@@ -1,0 +1,101 @@
+make: Entering directory '/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard'
+rm -f sim_build/sim02/results.xml
+mkdir -p sim_build/sim02
+/home/parv/tools/oss-cad-suite/bin/iverilog -o sim_build/sim02/sim.vvp -s tb -g2012 -DBINNER_BEHAV -I/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src -f sim_build/sim02/cmds.f  /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/project.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_ring.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_dchain.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_rcnt.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_sync.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_lfsr.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_spi.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_meas.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/../../src/binner_fmax.v /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard/tb.v
+/home/parv/tools/oss-cad-suite/lib/python3.11/site-packages/cocotb_tools/makefiles/simulators/Makefile.icarus:68: Using PLUSARGS is deprecated, please use COCOTB_PLUSARGS instead.
+rm -f sim_build/sim02/results.xml
+COCOTB_TEST_MODULES=sim_tb COCOTB_TESTCASE=  COCOTB_TOPLEVEL=tb TOPLEVEL_LANG=verilog       \
+	 /home/parv/tools/oss-cad-suite/bin/vvp -m /home/parv/tools/oss-cad-suite/lib/python3.11/site-packages/cocotb/libs/libcocotbvpi_icarus.so   sim_build/sim02/sim.vvp -fst +RING0_HP_FS=2542838 +RING1_HP_FS=2574963 +RING2_HP_FS=2557012 +RING3_HP_FS=2580821 +RING4_HP_FS=2587353 +RING5_HP_FS=2586399 +RING6_HP_FS=2579119 +RING7_HP_FS=2577251 +RING8_HP_FS=2574440 +RING9_HP_FS=2560911 +RING10_HP_FS=2600519 +RING11_HP_FS=2560426 +RING12_HP_FS=2602567 +RING13_HP_FS=2525321 +RING14_HP_FS=2566387 +RING15_HP_FS=2592548 +RING16_HP_FS=3506212 +RING17_HP_FS=4122884 +RING18_HP_FS=3041453 +DSTG1_FS=3489875 +DSTG2_FS=3495342 +DSTG3_FS=3489578 +DSTG4_FS=3470620 +DSTG5_FS=3451013 +DSTG6_FS=3470252 +DSTG7_FS=3498232 +DSTG8_FS=3482248 +DSTG9_FS=3482558 +DSTG10_FS=3495917 +DSTG11_FS=3465167 +DSTG12_FS=3504912 +DSTG13_FS=3507179 +DSTG14_FS=3475993 +DCHAIN_OVH_FS=616294 
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/home/parv/tools/oss-cad-suite/lib/libpython3.11.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/home/parv/tools/oss-cad-suite/lib/python3.11/site-packages/cocotb/simulator.cpython-311-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.11.14 interpreter at /home/parv/tools/oss-cad-suite/bin/tabbypy3
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1790728565
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /home/parv/tools/oss-cad-suite/lib/python3.11/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on Icarus Verilog version 14.0 (devel)
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running sim_tb.test_vboard_bringup (1/1)
+[binner_bringup sim02] BINNER bring-up 0.2.0 starting for chip_id=sim02
+[binner_bringup sim02] shuttle selection: find('binner') (sim=True)
+[binner_bringup sim02] stage1: sanity starting
+[binner_bringup sim02] stage1: sanity OK
+[binner_bringup sim02] stage2: ring characterisation starting (2 repeats/pair)
+[binner_bringup sim02] stage2: f_clk requested 10000000 achieved 10000000
+[binner_bringup sim02] stage2: pair 1/18 R00/R01
+[binner_bringup sim02] stage2: pair 2/18 R02/R03
+[binner_bringup sim02] stage2: pair 3/18 R04/R05
+[binner_bringup sim02] stage2: pair 4/18 R06/R07
+[binner_bringup sim02] stage2: pair 5/18 R08/R09
+[binner_bringup sim02] stage2: pair 6/18 R10/R11
+[binner_bringup sim02] stage2: pair 7/18 R12/R13
+[binner_bringup sim02] stage2: pair 8/18 R14/R15
+[binner_bringup sim02] stage2: pair 9/18 NAND/NOR
+[binner_bringup sim02] stage2: pair 10/18 FO4/CLK2
+[binner_bringup sim02] stage2: pair 11/18 DCH0/CLK2
+[binner_bringup sim02] stage2: pair 12/18 DCH1/CLK2
+[binner_bringup sim02] stage2: pair 13/18 DCH2/CLK2
+[binner_bringup sim02] stage2: pair 14/18 DCH3/CLK2
+[binner_bringup sim02] stage2: pair 15/18 DCH4/CLK2
+[binner_bringup sim02] stage2: pair 16/18 DCH5/CLK2
+[binner_bringup sim02] stage2: pair 17/18 DCH6/CLK2
+[binner_bringup sim02] stage2: pair 18/18 DCH7/CLK2
+[binner_bringup sim02] stage2: done
+[binner_bringup sim02] stage3: Fmax binary search starting (8 taps, 4 iters, 2 trials)
+[binner_bringup sim02] stage3: tap 1/8 (T0, 3 stages) starting
+[binner_bringup sim02] stage3: T0 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T0 bisect 2/4 @ 40.2MHz frac_fail=0.00
+[binner_bringup sim02] stage3: T0 bisect 3/4 @ 54.4MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T0 bisect 4/4 @ 47.3MHz frac_fail=1.00
+[binner_bringup sim02] stage3: tap 2/8 (T1, 4 stages) starting
+[binner_bringup sim02] stage3: T1 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T1 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T1 bisect 3/4 @ 26.1MHz frac_fail=0.00
+[binner_bringup sim02] stage3: T1 bisect 4/4 @ 33.2MHz frac_fail=0.00
+[binner_bringup sim02] stage3: tap 3/8 (T2, 5 stages) starting
+[binner_bringup sim02] stage3: T2 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T2 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T2 bisect 3/4 @ 26.1MHz frac_fail=0.00
+[binner_bringup sim02] stage3: T2 bisect 4/4 @ 33.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: tap 4/8 (T3, 6 stages) starting
+[binner_bringup sim02] stage3: T3 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T3 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T3 bisect 3/4 @ 26.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T3 bisect 4/4 @ 19.1MHz frac_fail=0.00
+[binner_bringup sim02] stage3: tap 5/8 (T4, 8 stages) starting
+[binner_bringup sim02] stage3: T4 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T4 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T4 bisect 3/4 @ 26.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T4 bisect 4/4 @ 19.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: tap 6/8 (T5, 10 stages) starting
+[binner_bringup sim02] stage3: T5 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T5 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T5 bisect 3/4 @ 26.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T5 bisect 4/4 @ 19.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: tap 7/8 (T6, 12 stages) starting
+[binner_bringup sim02] stage3: T6 bisect 1/4 @ 68.5MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T6 bisect 2/4 @ 40.2MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T6 bisect 3/4 @ 26.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: T6 bisect 4/4 @ 19.1MHz frac_fail=1.00
+[binner_bringup sim02] stage3: tap 8/8 (T7, 14 stages) starting
+[binner_bringup sim02] stage3: done
+[binner_bringup sim02] stage4: PUF starting (5 repeats x 16 pairs)
+[binner_bringup sim02] stage4: repeat 1/5 (16 pairs)
+[binner_bringup sim02] stage4: repeat 2/5 (16 pairs)
+[binner_bringup sim02] stage4: repeat 3/5 (16 pairs)
+[binner_bringup sim02] stage4: repeat 4/5 (16 pairs)
+[binner_bringup sim02] stage4: repeat 5/5 (16 pairs)
+[binner_bringup sim02] stage4: fingerprint = C1A90C05136FA80B
+[binner_bringup sim02] stage5: temperature log starting (2 samples)
+[binner_bringup sim02] stage5: sample 1/2 temp=26.66C
+[binner_bringup sim02] stage5: sample 2/2 temp=27.09C
+[binner_bringup sim02] bring-up complete for sim02 -> /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim02.csv
+1142699730.91ns INFO     cocotb.tb                          bring-up wrote /mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/data/vboard/pop20_seed20260929/binner_sim02.csv
+1142699730.91ns INFO     cocotb.regression                  sim_tb.test_vboard_bringup passed
+1142699730.91ns INFO     cocotb.regression                  **************************************************************************************
+                                                        ** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************
+                                                        ** sim_tb.test_vboard_bringup     PASS   1142699730.91        2297.57     497352.03  **
+                                                        **************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0          1142699730.91        2297.57     497351.72  **
+                                                        **************************************************************************************
+make: Leaving directory '/mnt/c/Users/parvb/Dropbox/Parv/NUS/Growth/tinytapeout/tt-binner/.claude/worktrees/agent-a613b2e6c5a39582e/test/vboard'

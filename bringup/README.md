@@ -244,14 +244,29 @@ figure (`sim_tb.test_vboard_bringup PASS ... REAL TIME (s) 1151.57`), for
 overhead (see below), not RTL slowness.
 
 **Under 4-way concurrency (`--jobs 4`), the same reduced-effort run took
-2400-2660s per chip (~45-48% parallel efficiency, not the naive 4x this
-machine's core count would suggest).** This was measured directly, twice
-(once before, once after the orphan-leak fix above) -- WSL2's "12 cores"
-do not give 12, or even 4, truly independent Icarus/cocotb processes real
-headroom on this machine. `--jobs` defaults to 4, not higher, for exactly
-this reason: it is the largest concurrency actually exercised end-to-end
-without the artificial (bug-caused) failures above, not a value chosen from
-the nominal core count.
+roughly 2000-2660s per chip (~43-58% parallel efficiency, not the naive 4x
+this machine's core count would suggest).** This was measured directly,
+three times: once before the orphan-leak fix (2400-2660s/chip, N=8, and
+that run's second wave crashed under the extra invisible contention the
+bug caused -- see above), once after the fix (N=8: 8/8 chips OK, 2302.9-
+2653.5s/chip, 4995.3s = 83.3 min total), and once at full scale (N=20:
+20/20 chips OK, 2010.0-2489.6s/chip, 11232.9s = **187.2 minutes (3.12
+hours)** total, both committed under `data/vboard/`). WSL2's "12 cores" do
+not give 12, or even 4, truly independent Icarus/cocotb processes real
+headroom on this machine -- if anything, per-chip time trended *down*
+slightly deeper into the N=20 run (the later chips averaging ~2150s vs the
+first wave's ~2450s), plausibly host-side caching/warmup rather than any
+real improvement in raw parallel capacity. `--jobs` defaults to 4, not
+higher, for exactly this reason: it is the largest concurrency actually
+exercised end-to-end without the artificial (bug-caused) failures above,
+not a value chosen from the nominal core count. Both `run_summary.json`
+files under `data/vboard/` have the full per-chip numbers verbatim.
+
+Analysis-pipeline sanity check on both committed populations
+(`analysis/binner_analysis.py`'s `load_population()`): **0 ingestion
+issues** across all 8 + 20 chips (2316 and 5800 rows respectively) -- the
+bring-up script's CSV output is fully schema-conformant end to end, not
+just superficially.
 
 The dominant cost is **not** simulated-cycle count or RTL complexity -- it's
 the fixed per-call overhead of the `cocotb._bridge` round trip itself (each
