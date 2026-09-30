@@ -54,7 +54,7 @@ DEFAULT_MODEL = {
         "INV": {"d0_ns": 0.100, "w_n": 0.5, "w_p": 0.5, "stages": 25},
         "NAND": {"d0_ns": 0.135, "w_n": 0.7, "w_p": 0.3, "stages": 25},
         "NOR": {"d0_ns": 0.160, "w_n": 0.25, "w_p": 0.75, "stages": 25},
-        "FO4": {"d0_ns": 0.230, "w_n": 0.5, "w_p": 0.5, "stages": 25},
+        "FO4": {"d0_ns": 0.230, "w_n": 0.5, "w_p": 0.5, "stages": 13},
         "DLY": {"d0_ns": 3.40, "w_n": 0.5, "w_p": 0.5, "stages": 1},
     },
     "temp_coeff_per_C": 0.0015,   # fractional delay increase per C

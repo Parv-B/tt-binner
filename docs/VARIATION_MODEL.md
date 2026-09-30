@@ -18,7 +18,7 @@ Delay per stage for structure type k at location (x, y) (normalised to [-1, 1] a
 | INV (R00..R15) | 0.100 | 0.5 | 0.5 | 25 |
 | NAND | 0.135 | 0.7 | 0.3 | 25 |
 | NOR | 0.160 | 0.25 | 0.75 | 25 |
-| FO4 | 0.230 | 0.5 | 0.5 | 25 |
+| FO4 | 0.230 | 0.5 | 0.5 | 13 |
 | DLY (chain stage) | 3.40 | 0.5 | 0.5 | per stage |
 
 - ε ~ N(0, σ_wid = 0.008): within-die random mismatch, independent per ring (and per chain stage, with σ = 0.004).

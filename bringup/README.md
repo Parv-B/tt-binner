@@ -345,24 +345,21 @@ draft of this one:
    on SRCA vs SRCB. Writing what you assume is "channel B's tap" actually
    changes what `uio_out`/the `MISC` debug mux shows.
 
-3. **`docs/VARIATION_MODEL.md`'s structure table still says FO4 has 25
-   stages; `src/binner_ring.v` uses `localparam N_FO4 = 13`.** SPEC.md is
-   explicit that RTL wins on any disagreement, and as of the D-FO4-STAGES/
-   D-DTAP-RETUNE investigation (DECISIONS.md, merged from `feat/must`),
-   `docs/SPEC.md` §5's own source table has been corrected to say 13 --
-   only `docs/VARIATION_MODEL.md`'s table is still stale. `test/vboard/
-   variation.py` uses 13, with a comment at the point of use -- getting
-   this wrong makes the injected `+RING18_HP_FS` (and therefore the
-   simulated FO4 ring frequency) wrong by roughly 2x relative to what the
-   ring the RTL actually built loops through.
+3. **(Fixed 2026-09-30) `docs/VARIATION_MODEL.md`'s structure table said FO4
+   has 25 stages; `src/binner_ring.v` uses `localparam N_FO4 = 13`.** The
+   same stale constant was also hardcoded in `analysis/binner_analysis.py`
+   and `analysis/synth_population.py` (both corrected too -- it fed a real,
+   silently-wrong `tpd_fo4_ps` derived-delay column, not just a doc
+   inconsistency). `test/vboard/variation.py` already used 13 correctly and
+   was never affected. `docs/reports/synthetic_pop20/` was regenerated
+   after the fix.
 
-4. **`docs/SPEC.md`'s header text says "Version register = 0x01"; the
-   register map table two lines below it, and the RTL's `VER` localparam,
-   both say `0x02`.** This script trusts the table/RTL (`VER_EXPECT = 0x02`)
-   per the spec's own stated tie-break rule ("If this document and the RTL
-   disagree, that is a bug; report it" -- but §4's table isn't disagreeing
-   with the RTL, only with §1's stale prose one section up). Worth fixing
-   in `docs/SPEC.md`, flagged here rather than silently worked around.
+4. **(Fixed 2026-09-30) `docs/SPEC.md`'s header text said "Version register
+   = 0x01"; the register map table and the RTL's `VER` localparam both say
+   `0x02`.** The header prose was the stale side; corrected to match. This
+   script always used `VER_EXPECT = 0x02` (the table/RTL value), so no
+   bring-up behaviour was ever affected -- this item only ever described a
+   doc inconsistency, not a live gotcha.
 
 5. **The Fmax checker's arming is a *level*, not a command, and the launch
    flops/capture flops are explicitly *not* `notouch_`.** `CTRL.FMAX_EN &

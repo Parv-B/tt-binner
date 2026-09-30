@@ -55,7 +55,7 @@ STRUCT = {
     "INV": dict(d0=0.100e-9, wn=0.5, wp=0.5, stages=25),
     "NAND": dict(d0=0.135e-9, wn=0.7, wp=0.3, stages=25),
     "NOR": dict(d0=0.160e-9, wn=0.25, wp=0.75, stages=25),
-    "FO4": dict(d0=0.230e-9, wn=0.5, wp=0.5, stages=25),
+    "FO4": dict(d0=0.230e-9, wn=0.5, wp=0.5, stages=13),
     "DLY": dict(d0=3.40e-9, wn=0.5, wp=0.5, stages=1),
 }
 TAP_STAGES = [3, 4, 5, 6, 8, 10, 12, 14]
