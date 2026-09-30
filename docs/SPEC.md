@@ -50,7 +50,7 @@ CS_N goes low, then byte 0 = `{W, A[6:0]}` (W=1 write, W=0 read), then data byte
 | 0x05 | SRCB | RW | 0x08 | [4:0] channel B source, [7:5] DBG (debug byte select) |
 | 0x06 | TIMING | RW | 0x5A | [3:0] GEXP (gate = 2^GEXP clk cycles, default 1024), [7:4] PINDIV (counter bit on uo_out[1]/[2]) |
 | 0x07 | CMD | WO (reads 0) | – | write 1 to trigger: [0] START, [1] CLEAR, [2] LFSR_RESEED, [3] FMAX_CLEAR |
-| 0x08 | STATUS | RO | 0x00 | [0] BUSY, [1] DONE, [2] OVF_A, [3] OVF_B, [4] SEEN_A, [5] SEEN_B, [6] TIMEOUT |
+| 0x08 | STATUS | RO | 0x00 | [0] BUSY, [1] DONE, [2] OVF_A, [3] OVF_B, [4] SEEN_A, [5] SEEN_B, [6] TIMEOUT, [7] FMAX_ARMED (also on uo_out[7]) |
 | 0x09/0x0A | CNTA_L/H | RO | 0 | channel A ring-domain counter — static from DONE until next START/CLEAR; live (debug only) in FREE mode |
 | 0x0B/0x0C | CNTB_L/H | RO | 0 | channel B counter, same semantics |
 | 0x0D/0x0E | LFSR_L/H | RO | 0xACE1 | live LFSR state |
@@ -76,7 +76,7 @@ Measurement (paired): write SRCA and SRCB, set TIMING.GEXP, set CTRL.RUN, then w
 
 Frequency: `f_src = CNT * f_clk / (2^GEXP)`, ±1 count.
 - Known answer: source 20 (clk/2) gives CNT = 2^GEXP/2 ± 1.
-- Validity: SEEN_x = 1 means channel x counted. SEEN_x = 0 means the source is dead or too slow, so the result is invalid. OVF_x = 1 means the 16-bit counter wrapped; use a shorter gate. TIMEOUT = 1 means the acknowledge did not fall within 255 cycles.
+- Validity: SEEN_x = 1 means channel x counted. SEEN_x = 0 means the source is dead or too slow, so the result is invalid. OVF_x = 1 means the 16-bit counter wrapped; use a shorter gate. TIMEOUT = 1 means the acknowledge did not fall within 63 cycles.
 - Poll STATUS.DONE (or pin uo_out[6]) before reading CNTA/CNTB. A measurement takes 2^GEXP + about 10 clk cycles.
 
 ## 6. Fmax (at-speed) checker

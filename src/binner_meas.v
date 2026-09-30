@@ -65,8 +65,8 @@ module binner_meas (
   binner_sync2 u_s_acka (.clk(clk), .rst_n(rst_n), .d(ack_a_raw), .q(ack_a));
   binner_sync2 u_s_ackb (.clk(clk), .rst_n(rst_n), .d(ack_b_raw), .q(ack_b));
 
-  wire ok_a = seen_a ? ~ack_a : wcnt[4];   // unseen channel: wait 16 cycles
-  wire ok_b = seen_b ? ~ack_b : wcnt[4];
+  wire ok_a = seen_a ? ~ack_a : (wcnt >= 6'd16);   // unseen channel: wait 16 cycles
+  wire ok_b = seen_b ? ~ack_b : (wcnt >= 6'd16);
   wire [15:0] gate_len = 16'd1 << gexp;
 
   always @(posedge clk or negedge rst_n) begin

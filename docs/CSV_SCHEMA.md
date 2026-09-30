@@ -43,7 +43,7 @@ Fmax taps: `T0`..`T7` (stage counts 3,4,5,6,8,10,12,14).
 | 4 | `puf_bit` | `b<nn>` | – | bit value (0/1) for this repeat | bit |
 | 5 | `temp` | `CORE` | – | RP2350 core temperature | C |
 
-The Stage 4 PUF bit definition is `b<nn>` for nn = 0..7: compare simultaneous pair (R(2nn), R(2nn+1)), bit = 1 if f_even > f_odd. Additional bits come from pairs (R_i, R_(i+8)). That gives 16 bits in total; `fingerprint` is the 16-bit majority-vote word in 4 hex digits, followed by 12 hex digits of CRC-free raw ratio sign bits from all 120 pairs, compressed (see bringup docs).
+The Stage 4 PUF bit definition is `b<nn>` for nn = 0..15, one bit per pair from the 16 fixed pairs `_puf_pairs()` defines (bringup/binner_bringup.py); bit = 1 if f_a > f_b for that pair (majority vote across all repeats). `fingerprint` is that 16-bit majority word in 4 hex digits, followed by 12 hex digits (48 bits) of a folded hash of every measured ratio across all pairs and repeats (`_fold_hash48`, bringup/binner_bringup.py) — a compact tamper-evident tail, not a second independent set of bits from 120 pairs.
 
 ## Simulation truth (virtual board only)
 For every simulated chip the population runner also writes `truth_<chip_id>.json` with all injected parameters (docs/VARIATION_MODEL.md). The analysis must never read truth files except in validation mode.

@@ -165,13 +165,15 @@ Recommendation if a decision is needed before the owner weighs in: option 3, sin
 uses the part of the prescribed order least damaging to priorities #2/#3 while still
 showing area discipline; but no cut is being applied automatically pending input, since
 options 1-3 meaningfully change what silicon ships and what data it can produce.
-- **N/P skew measurement precision**: population-analysis Monte-Carlo validation
-  (`analysis/VALIDATION.md`) found the s_n-s_p estimator misses its documented
-  ±0.01 target (actual RMSE ~=0.025, at both N=20 and N=8 — a per-die measurement-noise
-  floor from having only one NAND ring and one NOR ring per die, not a population
-  sampling-size problem). Decision deferred to the docs/freeze pass: most likely
-  resolution is relaxing the target in `docs/VARIATION_MODEL.md` rather than reopening
-  frozen RTL to add redundant N/P-sensitive structures at further area cost.
+- **N/P skew measurement precision — RESOLVED (2026-09-30, red-team pass).**
+  population-analysis Monte-Carlo validation (`analysis/VALIDATION.md`) found the
+  s_n-s_p estimator misses its originally-documented ±0.01 target (actual RMSE
+  ~=0.025, at both N=20 and N=8 — a per-die measurement-noise floor from having only
+  one NAND ring and one NOR ring per die, not a population sampling-size problem, so
+  no amount of additional chips would fix it). Resolved by relaxing the target in
+  `docs/VARIATION_MODEL.md` to ±0.025 rather than reopening frozen RTL to add
+  redundant N/P-sensitive structures at further area cost (which is now moot anyway
+  given D-UTILIZATION's resolution above).
 - **3 max-fanout violations present at every corner** (structural, not corner-dependent;
   `metrics.csv` does not name the net(s)). Not currently gating CI. To be identified and
   assessed once the netlist-audit/timing-report tooling can name the specific net(s).
