@@ -58,6 +58,22 @@ characters that cp1252 can't encode).
 Prefer plain ASCII in new docs/comments where a straight quote or hyphen reads just
 as well — it sidesteps the whole problem.
 
+## cocotb/vvp simulations are slow and don't parallelize well here
+A single `test/vboard` bring-up run (cocotb bridge/resume against Icarus) takes on
+the order of **20 minutes of real wall time** even in reduced-effort mode, for well
+under 2 seconds of simulated time — the cost is per-pin-access bridge/thread-hop
+overhead, not RTL complexity (see `bringup/README.md`'s "Measured runtimes" section
+for the full breakdown). This machine reports 12 cores / 7.6GB RAM, but does **not**
+give that many Icarus/cocotb processes real headroom: 4 concurrent chips measured
+~45-48% parallel efficiency (each took 2400-2660s instead of the ~1150s solo figure),
+not the naive 4x. Always launch any `make`/cocotb run backgrounded/detached and poll
+its log rather than blocking on it — a blocking call risks exceeding whatever is
+supervising it, and if a supervisory timeout then kills only the immediate `make`
+process (not its whole process tree), the actual simulator is orphaned and keeps
+running unsupervised, invisibly doubling load for whatever runs next. See
+`test/vboard/run_population.py`'s `run_one_chip()` (`os.setsid` + `os.killpg()`) for
+the pattern that avoids this.
+
 ## Git worktrees for subagents
 `.claude/` is gitignored. Subagents spawned with `isolation: "worktree"` land under
 `.claude/worktrees/agent-<id>/` as real git worktrees on their own branch. If you

@@ -1,0 +1,6 @@
+sim_build/
+results.xml
+tb.fst
+tb.fst.hier
+__pycache__/
+*.pyc
