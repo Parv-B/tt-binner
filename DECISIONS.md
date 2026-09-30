@@ -94,7 +94,19 @@ to break up the enable net the same way) — the INV/PUF rings' enable is the sh
 `run`/`ren[i]` gating signal that also drives the measurement-controller side and was
 not the failing net.
 
-## D-UTILIZATION — 60% area target is not reachable via the prescribed cut order; flagged for owner input (2026-09-29)
+## D-UTILIZATION — 60% target relaxed; ~82% utilization accepted (2026-09-29, resolved 2026-09-30)
+
+**Resolved.** Owner approved relaxing the 60% target after reviewing the evidence below.
+Decision: accept the current ~82% utilization as-is. No area cut applied. Rationale
+(owner-confirmed): the 60% figure was set in the original brief before any real
+hardening data existed, as a standard blind risk-aversion margin against an unproven
+flow choking on a dense design. That risk did not materialize: real post-route data at
+~82% shows 0 DRC errors, 0 antenna violations, 0 routing errors, and (after
+D-CLOCK-PERIOD) 0 setup/hold timing violations at all 9 STA corners. The thing the
+margin was meant to protect against empirically did not happen on this design/flow, so
+enforcing the original number would mean cutting real characterization content (Fmax,
+ring population) to satisfy a target chosen before the flow was proven, not to fix an
+actual problem. Superseded by the analysis below (kept for the record).
 
 **Re-checked after D-CLOCK-PERIOD** (commit 9692913, `tools/metrics_summary.py` on the
 green re-harden, `docs/reports/9692913/metrics_summary.md`): utilization is **81.98%**,

@@ -1,7 +1,7 @@
 # BINNER specification (contract for RTL, tests, firmware, analysis)
 
 Top module `tt_um_parv_b_binner`, Tiny Tapeout TTGF26d, GF180MCU 7-track cells at 3.3 V.
-Version register = 0x01. If this document and the RTL disagree, that is a bug; report it.
+Version register = 0x02. If this document and the RTL disagree, that is a bug; report it.
 
 ## 1. Pins
 
