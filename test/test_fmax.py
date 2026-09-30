@@ -65,9 +65,16 @@ async def test_fmax_clear(dut):
     await tb.wr(CTRL, 0)
 
 
-@gl_safe
+@rtl_only
 async def test_fmax_arming_pin(dut):
-    """armed (uo_out[7], STATUS[7]) = CTRL.FMAX_EN & sync(ui_in[7]) & !PINMODE."""
+    """armed (uo_out[7], STATUS[7]) = CTRL.FMAX_EN & sync(ui_in[7]) & !PINMODE.
+
+    RTL-only: exercises tb.set_pinmode(1, bank=1) without ena=0, which enables
+    a real ring in the gate-level netlist (see D-GLTEST-PINMODE-HANG,
+    DECISIONS.md, and test_pinmode.py's module docstring for the general
+    hazard). Unlike test_lfsr_pinmode_steps (which deliberately holds ena=0
+    to keep `run` forced 0 regardless of pinmode), this test needs ena=1 to
+    check CTRL.FMAX_EN's own gating, so it cannot use that guard."""
     tb = TB(dut, "test_fmax_arming_pin")
     await tb.start()
 

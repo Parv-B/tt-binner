@@ -2,9 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 """Pin-strap mode (SPEC section 1, ui_in[3] = PINMODE): sources come from
 ui_in[7:4], counters free-run, the LFSR steps every clk, uio stays input, and
-SPI still works. RTL-only: the frequency checks need a real behavioural ring."""
+SPI still works.
 
-from binner_tb import RO_RESET, TB, TIMING, gl_safe, ring_freq_hz, rtl_only
+Every test in this module is RTL-only (@rtl_only), including the ones that
+never look at a ring frequency: entering pin-strap mode at all
+(tb.set_pinmode(1, ...)) forces `run=1` unconditionally, which enables a real
+ring in the gate-level netlist. Under GATES=yes that ring is a zero-delay
+combinational loop that never settles -- see D-GLTEST-PINMODE-HANG in
+DECISIONS.md. Do not mark any pinmode test @gl_safe without disabling
+pin-strap mode's ring-enabling side effect first."""
+
+from binner_tb import RO_RESET, TB, TIMING, ring_freq_hz, rtl_only
 
 
 @rtl_only
@@ -63,9 +71,18 @@ async def test_pinmode_uio_stays_input(dut):
     tb.set_pinmode(0)
 
 
-@gl_safe
+@rtl_only
 async def test_pinmode_spi_still_works(dut):
-    """SPI reads (and writes) still work while ui_in[3] (PINMODE) is high."""
+    """SPI reads (and writes) still work while ui_in[3] (PINMODE) is high.
+
+    RTL-only, not because this test reads a ring frequency (it doesn't) but
+    because merely entering pin-strap mode (tb.set_pinmode(1, ...)) forces
+    `run=1` unconditionally, which enables a real ring in the gate-level
+    netlist. Under GATES=yes (-DFUNCTIONAL, zero-delay), an enabled ring is a
+    zero-delay combinational loop that never settles -- confirmed directly:
+    this test alone took 111s of real time to simulate 2150ns before failing,
+    and was the root cause of CI's gl_test job stalling for 1.5+ hours (see
+    DECISIONS.md D-GLTEST-PINMODE-HANG)."""
     tb = TB(dut, "test_pinmode_spi_still_works")
     await tb.start()
     tb.set_pinmode(1, sel=2, bank=0)

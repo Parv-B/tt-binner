@@ -281,3 +281,122 @@ change DTAP, then re-enable. This is a cheap, safe documentation-only fix with n
 area cost, consistent with "prefer boring, proven solutions wherever silicon risk is
 involved." `bringup/binner_bringup.py`'s Fmax/delay-chain-ring stages should follow this
 sequence; flagged for the bring-up engineer to confirm.
+
+## D-GLTEST-PINMODE-HANG -- CI's gl_test job hung for hours (test bugs, not a design defect) (2026-09-30)
+
+**Symptom.** After the S3 fix (D-GLTEST-PINMODE-HANG is documented here rather than as
+part of that entry because it was discovered independently, while re-verifying S3's
+harden), CI's `gl_test` job ran for over 1.5 hours on two separate commits in a row
+(normally a few minutes) before being manually cancelled both times. This burned real
+time (CI concurrency contention from stacked pushes made it worse, and was itself
+partially misdiagnosed as the cause before the real one was found) and was investigated
+to a full, verified root cause rather than being written off as GitHub infrastructure
+flakiness.
+
+**Investigation.** Reproduced locally: fetched the actual post-route powered netlist from
+the affected CI run's `tt_submission` artifact and ran `GATES=yes make` against it
+directly in WSL with a hard timeout. Confirmed a genuine, reproducible hang (not GitHub
+infra): one specific test, `test_pinmode.test_pinmode_spi_still_works`, took 111 seconds
+of real time to simulate 2150 ns before failing -- a ~50,000x slowdown versus every other
+test in the suite (typically millions of ns/s).
+
+**Root cause 1 (the hang): two tests wrongly marked `@gl_safe`.**
+`test_pinmode_spi_still_works` (test_pinmode.py) and `test_fmax_arming_pin`
+(test_fmax.py) were both marked `@gl_safe` -- meaning "safe to run against the real
+gate-level netlist" -- because neither test directly reads a ring frequency. Both call
+`tb.set_pinmode(1, ...)` to test something else (SPI still working in pin-strap mode;
+Fmax forced disarmed in pin-strap mode) without first forcing `ena=0`. Entering pin-strap
+mode unconditionally sets `run=1` (`run = ena & (ctl_run | pinmode)` in project.v),
+which enables whichever ring is pin-selected -- a REAL ring in the gate-level netlist.
+Under `GATES=yes` (`-DFUNCTIONAL`, zero delay per the PDK's own model), an enabled ring
+is a zero-delay combinational loop that Icarus must re-evaluate at the same simulation
+timestamp forever -- this project's own `test/Makefile` comment already documents this
+exact failure mode for hand-instantiated rings generally; these two tests simply
+triggered it via pin-strap mode rather than directly. A third test,
+`test_lfsr.test_lfsr_pinmode_steps`, also enters pin-strap mode and is correctly marked
+`@gl_safe` -- it deliberately holds `ena=0`, which forces `run=0` unconditionally
+regardless of `pinmode`, correctly sidestepping the hazard; verified this one is fine by
+running it standalone under `GATES=yes` (fast, no hang) and by an automated scan of every
+`@gl_safe` test in the suite for `set_pinmode(1, ...)` calls without a `ena=0` guard,
+which found no other instances.
+
+Fix: both tests recategorised `@rtl_only`, with the mechanism documented in their
+docstrings and in `test_pinmode.py`'s module docstring (a standing warning against
+marking any future pin-strap-mode test `@gl_safe` without the `ena=0` guard).
+
+**Why this had gone undetected until now.** The verification engineer's original
+`make struct`/GL-safety review was inspection-only (their own report says so explicitly):
+they could not run `GATES=yes make` in their worktree at the time (`gate_level_netlist.v`
+only exists once a real hardening run's artifact is copied in, which is what CI's
+`gl_test` job itself does) and verified `@gl_safe` categorisation by reading decorators
+and reasoning about intent, not by executing it. This is exactly the kind of gap that
+only running the real thing catches. `feat/must`'s two prior "gl_test: success" results
+(commits 908c9e1, 9692913, and the groundtruth/analysis/tools merge at 2e16f29) all
+predate `test_pinmode.py`/`test_fmax.py` existing at all (they were added in the
+tests-branch merge, commit `be8ceea`, folded into `dc0ebf4`) -- there was no prior green
+`gl_test` run that this bug could have failed, so "RTL is unchanged since the last
+green gl_test run" (the reasoning used to wave off the red-team review's S1 finding) was
+an incomplete check: it accounted for RTL drift but not test-suite drift, and the test
+suite is exactly what changed.
+
+**Root cause 2 (a real, separate finding once the hang was fixed): a second test,
+`test_meas.test_done_busy_timing`, failed cleanly (no hang) under `GATES=yes` for two
+independent, subtler reasons, both now understood and fixed with no RTL change:**
+
+1. *A benign, physically-real combinational glitch, not a design defect.* `busy_pin`
+   (`uo_out[4]`) is a combinational function of the 2-bit `state` register
+   (`busy = state != S_IDLE`). RTL simulation updates a multi-bit `reg` atomically (one
+   delta cycle, Verilog's native `<=` semantics for a vector) so `state` never
+   transiently reads an intermediate value. A real synthesized netlist implements each
+   bit as an independently-clocked flip-flop; if their outputs don't settle in perfect
+   lockstep (a delta-cycle-ordering artifact of the gate-level model, not a timing model
+   -- this happens even under nominally "zero delay"), `state` can pass through a
+   transient value for a sub-cycle instant during any transition where both bits change.
+   Traced exactly: the `S_CLR(2'b01) -> S_RUN(2'b10)` transition (both bits flip) can
+   transiently read `2'b00`, which equals `S_IDLE` -- making `busy_pin` glitch low for an
+   instant, right at that transition, confirmed to happen exactly at the expected cycle
+   (2, matching "second CLR cycle" in the RTL). The test used a continuously-armed
+   `FallingEdge(busy_pin)` VPI callback to time when BUSY falls, which caught this
+   transient glitch as if it were the real event -- giving a nonsensical "BUSY lasted 2.0
+   cycles" result when the real measurement took ~20. The final `S_WAIT(11) -> S_IDLE(00)`
+   transition (also a 2-bit change) was checked and confirmed NOT to have this hazard:
+   neither `2'b01` nor `2'b10` (the two possible transients) equals `S_IDLE`, so `busy`
+   cannot glitch low at the real completion point. This glitch is real, expected,
+   physically-normal combinational-logic behaviour, present on real silicon too on any
+   multi-bit-encoded state machine -- and completely invisible to any real downstream
+   reader, since RP2350 firmware polls pins at microsecond timescales, many orders of
+   magnitude slower than a sub-nanosecond gate-level glitch. Confirmed independently with
+   a standalone cycle-by-cycle diagnostic (sampling busy/done only at clock edges, never
+   catching transient glitches) against the same netlist: busy and done transitioned
+   perfectly simultaneously, every cycle, with no anomaly.
+2. *A VPI callback-ordering subtlety*, found while fixing #1: `RisingEdge(done_pin)`'s
+   callback can fire in an earlier delta-cycle than when `busy_pin`'s own downstream
+   combinational logic (driven off the same register update) has finished propagating,
+   even though both are correct by the end of that simulation time step. Sampling
+   `busy_pin` immediately after `await t_done` intermittently read a stale (pre-update)
+   value. Fixed with cocotb's `ReadOnly()` trigger (the standard "nothing more will
+   change this time step" synchronisation point) before the sample, and `NextTimeStep()`
+   immediately after to leave the read-only region before driving any more SPI pins
+   (attempting to drive a signal during `ReadOnly()` raises `RuntimeError` in cocotb
+   2.1.0 -- caught immediately by re-running the RTL suite, which does not have this
+   glitch but does share the same test code path).
+
+Fix: `test_done_busy_timing` no longer races a second `FallingEdge(busy_pin)` trigger at
+all. It derives `busy_cycles` from `done_pin`'s clean, glitch-free rising edge (the two
+are the same event by construction: both set in the same clocked branch of
+`binner_meas.v`), and confirms `busy_pin == 0` by sampling (through `ReadOnly()`), never
+by racing.
+
+**Verification.** After both fixes, the FULL suite was re-run to completion in both
+modes, several times, from a clean `make clean`, with generous (150s) but bounded
+timeouts (never blocking indefinitely again, per the DEV_ENVIRONMENT.md lesson from the
+bring-up agent's own earlier hang investigation): RTL mode 48/48 PASS, 0 FAIL, ~50s. Gate-
+level mode (`GATES=yes`, against the real post-route netlist) 34/34 non-skipped PASS,
+0 FAIL, 14 correctly SKIP (every ring/pin-strap-touching test), ~97s -- no hang, on
+repeated runs.
+
+**No RTL change.** Every fix in this entry is in `test/`. `src/binner_meas.v` (S3, in the
+prior entry above) was the only RTL touched in this pass, and is unrelated to this
+finding -- confirmed by reproducing this exact hang and both `test_meas.py` failures
+against the artifact of a commit that already included S3, then re-verifying clean after
+the test-only fixes with no further RTL edits.

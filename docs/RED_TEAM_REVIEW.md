@@ -66,6 +66,25 @@ green, not assumed, before treating the design as frozen/submission-ready.
 `success`. If it fails, treat as blocking and escalate immediately (would be
 surprising given the unchanged RTL, but must not be assumed).
 
+**Resolution (2026-09-30, orchestrator).** Confirmed as more than a process
+gap: `gl_test` genuinely hung (1.5+ hours, twice, on separate commits) rather
+than just running slowly. Root-caused by reproducing the exact CI netlist
+locally with a hard timeout: two tests newly added in the same merge that
+introduced this finding (`test_pinmode.test_pinmode_spi_still_works`,
+`test_fmax.test_fmax_arming_pin`) were miscategorised `@gl_safe` and enabled
+a real ring in the gate-level netlist, a zero-delay combinational loop under
+`GATES=yes`. This finding's own reasoning ("RTL unchanged since 9692913, so
+unlikely to fail") was the source of the miss: it checked `src/` drift but
+not `test/` drift, and the test suite — not the design — was what had
+changed and was at fault. See DECISIONS.md D-GLTEST-PINMODE-HANG for the
+full root cause (including a second, independent finding: a benign
+gate-level combinational glitch that made an unrelated test in the same
+module, `test_meas.test_done_busy_timing`, fail cleanly once the hang itself
+was fixed). Both tests recategorised `@rtl_only`; `test_done_busy_timing`
+rewritten to sample rather than race a glitch-prone signal. No RTL change.
+Full suite reruns confirmed clean in both modes (RTL 48/48, GL 34/34
+non-skipped, 0 FAIL) before this note was added.
+
 ---
 
 ## S2 — docs/SPEC.md's TIMEOUT cycle count contradicts the RTL and the test suite (should-fix)
