@@ -45,6 +45,25 @@
   "//": "BINNER: base.sdc plus false paths into the Fmax capture flops. See DECISIONS.md D-SDC.",
   "FALLBACK_SDC_FILE": "dir::binner.sdc",
 
+  "//": "BINNER: author-name silicon art, a pinless Metal4 macro from tools/make_art.py.",
+  "//": "Placed in the leftmost gap between Metal4 PDN stripe pairs (x 23.78-57.75 um) at",
+  "//": "mid-height: clear of the top-edge Metal4 pins and of every ring, the delay",
+  "//": "chain and the Fmax flops (all at y < 47 um or x > 240 um). See DECISIONS.md D-ART.",
+  "MACROS": {
+    "binner_art": {
+      "instances": {
+        "art": {
+          "location": [24.64, 78.4],
+          "orientation": "N"
+        }
+      },
+      "gds": ["dir::../macros/binner_art.gds"],
+      "lef": ["dir::../macros/binner_art.lef"]
+    }
+  },
+  "IGNORE_DISCONNECTED_MODULES": ["binner_art", "art"],
+  "ERROR_ON_DISCONNECTED_PINS": false,
+
   "//": "Configuration docs: https://librelane.readthedocs.io/en/latest/reference/configuration.html",
 
   "//": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",

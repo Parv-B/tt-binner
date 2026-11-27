@@ -72,6 +72,8 @@ VERILOG_SOURCES += $(PDK_ROOT)/gf180mcuD/libs.ref/gf180mcu_fd_sc_mcu7t5v0/verilo
 
 # this gets copied in by the GDS action workflow
 VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
+# empty definition for the pinless silicon-art macro instance in that netlist
+VERILOG_SOURCES += $(PWD)/binner_art_stub.v
 COCOTB_TEST_MODULES = test,test_reset,test_spi,test_lfsr,test_meas,test_ring,test_pinmode,test_fmax
 
 endif

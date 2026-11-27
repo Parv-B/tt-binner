@@ -29,6 +29,13 @@
 
 `default_nettype none
 
+// Hard macro from tools/make_art.py; empty here so RTL simulation and
+// synthesis see a pinless blackbox. test/binner_art_stub.v plays the same role
+// for the gate-level netlist.
+(* blackbox *) (* keep *)
+module binner_art ();
+endmodule
+
 module tt_um_parv_b_binner (
     input  wire [7:0] ui_in,    // Dedicated inputs
     output wire [7:0] uo_out,   // Dedicated outputs
@@ -272,5 +279,10 @@ module tt_um_parv_b_binner (
   assign uio_oe  = {8{ctl_uiooe}};
 
   wire _unused = &{uio_in, 1'b0};
+
+  // Silicon art (author name on Metal4): no pins, no logic. Geometry comes
+  // from macros/binner_art.gds via MACROS in src/config.json. See DECISIONS.md D-ART.
+  (* keep *)
+  binner_art art ();
 
 endmodule
