@@ -532,3 +532,14 @@ copied from the PDK liberty.
   max-cap 1 -> 1 are the pre-existing unbuffered ring structures. Disconnected
   pins 8 -> 9: the extra one is the report line "art has no power pins". It is
   non-critical and left unwaived so the check still covers pin A.
+
+**Feed-shortening attempt 1 (user chose to try this before merging).** The art moves
+from (24.64, 78.4) to (218.96, 47.04), into the stripe gap x 218.13-252.10 um where
+the art ring sat in 092e95b (centroid 249.7, 55.3). Stripe clearance is 0.83/0.66 um,
+the location is on the site/row grid, and the spot is clear of the top-edge pins.
+`make_art.py --pin right` (now the default) puts the spine and pin A at the
+bottom-right, facing the ring bank. The shape is otherwise identical: 204.3 um^2,
+456.2 um perimeter, est. 19.0 fF, KLayout-clean. `--pin left` reproduces the
+092e95b art exactly. Note that in 092e95b the delay chain spread across the tile
+(bbox x 4.5-272 um, vs the bottom band on main), so the comparison for this run
+also covers the delay-chain/Fmax SDF predictions, not just the rings.

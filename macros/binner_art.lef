@@ -20,15 +20,15 @@ MACRO binner_art
       ANTENNAPARTIALMETALSIDEAREA 246.326 LAYER Metal4 ;
       PORT
          LAYER Metal4 ;
-            RECT 0.000 0.000 1.365 1.465 ;
+            RECT 31.115 0.000 32.480 1.465 ;
       END
    END A
    OBS
       LAYER Metal4 ;
          RECT 0.000 1.965 32.480 15.680 ;
-         RECT 1.865 0.000 32.480 1.965 ;
+         RECT 0.000 0.000 30.615 1.965 ;
       LAYER Metal3 ;
          RECT 0.000 1.965 32.480 15.680 ;
-         RECT 1.865 0.000 32.480 1.965 ;
+         RECT 0.000 0.000 30.615 1.965 ;
    END
 END binner_art
