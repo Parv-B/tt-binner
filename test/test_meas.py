@@ -139,7 +139,7 @@ async def test_counters_static_after_done(dut):
 
 @gl_safe
 async def test_dead_sources(dut):
-    """Sources 21..31 (constant 0) and a disabled ring (RUN=0): SEEN=0, CNT=0,
+    """Sources 22..31 (constant 0) and a disabled ring (RUN=0): SEEN=0, CNT=0,
     measurement still completes without TIMEOUT (SPEC: 16-cycle fixed wait for
     an unseen channel)."""
     tb = TB(dut, "test_dead_sources")
@@ -153,7 +153,7 @@ async def test_dead_sources(dut):
         assert not st & S_SEEN_B and st & S_SEEN_A, f"B={s}: SEEN bits wrong, STATUS={st:#04x}"
         assert cb == 0 and abs(ca - 64) <= 1, f"B={s}: CNTA={ca} CNTB={cb}"
     # Both dead, and rings selected with CTRL.RUN = 0 (rings off -> dead).
-    for a, b in ((21, 31), (0, 8), (16, 19), (18, 17)):
+    for a, b in ((22, 31), (0, 8), (16, 19), (18, 17), (21, 21)):
         st, ca, cb = await tb.measure(a, b, gexp=8, extra_cycles=100)   # gate 256
         assert st & (S_DONE | S_BUSY | S_TIMEOUT | S_SEEN_A | S_SEEN_B) == S_DONE, f"A={a},B={b}: STATUS={st:#04x}"
         assert ca == 0 and cb == 0, f"A={a},B={b}: CNTA={ca} CNTB={cb}"
@@ -166,7 +166,7 @@ async def test_start_clears_previous_status(dut):
     await tb.start(period_ns=20.0)
     st, _, _ = await tb.measure(SRC_CLK2, SRC_CLK2, gexp=9)
     assert st & (S_SEEN_A | S_SEEN_B) == S_SEEN_A | S_SEEN_B
-    st, ca, cb = await tb.measure(21, 22, gexp=9)
+    st, ca, cb = await tb.measure(22, 23, gexp=9)
     assert st & (S_SEEN_A | S_SEEN_B) == 0 and ca == 0 and cb == 0, f"stale status: {st:#04x} {ca} {cb}"
 
 

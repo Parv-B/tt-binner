@@ -454,3 +454,57 @@ also explains the art run's jump to 85.7% utilization (vs ~82%): it removed abou
 **Gate-level test.** The post-route netlist instantiates `binner_art` without
 defining it, so `test/Makefile` adds `test/binner_art_stub.v` (an empty module) to
 the `GATES=yes` sources only. RTL builds get the same empty module from `project.v`.
+
+## D-ART-RO -- the name art becomes a Metal4 wire load on a new ring, source 21 (2026-11-27, branch feat/art-ro)
+
+**What.** The decorative art (D-ART, on main at 6e098f2) is redrawn as ONE connected
+Metal4 shape and hung as a capacitive load on stage 12 of a new 25-stage INV ring,
+source 21 (previously constant 0). The ring is cell-for-cell identical to PUF rings
+0-15, so their mean is the built-in unloaded reference: `art_load = f(0-15 mean) /
+f(21) - 1` is a per-die index of Metal4 capacitance against transistor drive. No
+other BINNER structure measures the back end of line. VER 0x02 -> 0x03 so software
+can tell the two versions apart.
+
+**Shape** (`tools/make_art.py --mode wire`, the default on this branch): solid 0.85
+um pixels (no gaps), every diagonal-only pixel contact filled in so there is no
+corner-touch, each line underlined and the underlines joined by a left spine. The
+result is one polygon, 204 um^2, 456 um of perimeter, in the same 32.48 x 15.68 um
+footprint and location as D-ART. An independent KLayout check (`klayout.db` width,
+space, notch and area at 0.28 um / 0.1444 um^2) is clean. Pin `A` (Metal4, 46/0 +
+46/10 label, like the tile's own pins) is at the bottom-left corner. The LEF
+obstructs Metal4 and Metal3 over the footprint except a 0.5 um window around the
+pin, so the load's surroundings are fixed rather than left to the router.
+
+**Why one pin, not two.** Two pins joined inside the macro (signal routed through
+the name) would also give an open-circuit check. But the layout would then show A
+and B shorted inside the macro while the netlist has two nets, an LVS risk with no
+fix inside this deadline. A one-pin stub keeps LVS trivial and still gives the
+capacitance measurement, which is the useful part.
+
+**Load estimate, 19.0 fF** (in `macros/binner_art.lib`, so STA and the SDF see it):
+C = 0.009 fF/um^2 x area + 0.0377 fF/um x perimeter. LibreLane's Metal4 RC
+(7.756e-5 pF/um at 0.28 um, `dumprcvalues`) is the tech-LEF CPERSQDIST times the
+minimum width, i.e. fringe folded into area, so it would badly overestimate a wide
+shape. The split assumes about 4 um of oxide under Metal4. Treat the value as
++/-50%; silicon measures the real one. Against an INV_1 input of 4.6 fF (tt
+liberty), stage 12 drives about 5x its normal load, so the ring should run on the
+order of 10% slower than the PUF rings. That is far above count resolution.
+
+**Integration.** `binner_ring` KIND 4 (= INV ring + `ld` port); RSZ_DONT_TOUCH_RX
+covers the load net (`art_ld_notouch_`), so it is never buffered. The
+IGNORE_DISCONNECTED_* waivers from D-ART are removed now that the macro is
+connected, so a lost connection fails the flow instead of passing silently. Tests:
+DEAD_SRCS is now 22..31; the ring-enable probes and the functional
+oscillation test cover source 21. Pin-strap mode already reaches it (bank 1,
+s = 5). Bring-up measures item `ART` (paired with FO4); the analysis accepts it
+and reports `f_art`/`art_load` per chip. Tools: `pvlib` KIND 4, and
+`netlist_audit` treats it like an INV ring.
+
+**Local verification before CI.** RTL regression 48/48 PASS; analysis tests 42/42;
+netlist-audit self-test PASS; Verilator lint has no new warnings; Yosys keeps
+`art.A` on the stage-12 net (one driver; loads: stage 13 and the macro).
+
+**Merge rule.** gds + precheck (incl. LVS and antenna) + gl_test green, the art
+ring's SDF-predicted period ~5-20% above the PUF mean (sanity check on the 19 fF
+model), and the other rings near the 6e098f2 baseline. Drop the branch if it is not
+green by 2026-12-03; main keeps the decorative art either way.

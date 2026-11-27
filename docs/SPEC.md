@@ -1,7 +1,7 @@
 # BINNER specification (contract for RTL, tests, firmware, analysis)
 
 Top module `tt_um_parv_b_binner`, Tiny Tapeout TTGF26d, GF180MCU 7-track cells at 3.3 V.
-Version register = 0x02. If this document and the RTL disagree, that is a bug; report it.
+Version register = 0x03 (v0.3 added source 21, the art ring; see DECISIONS.md D-ART-RO). If this document and the RTL disagree, that is a bug; report it.
 
 ## 1. Pins
 
@@ -44,7 +44,7 @@ CS_N goes low, then byte 0 = `{W, A[6:0]}` (W=1 write, W=0 read), then data byte
 |---|---|---|---|---|
 | 0x00 | ID0 | RO | 0x42 | 'B' |
 | 0x01 | ID1 | RO | 0x4E | 'N' |
-| 0x02 | VER | RO | 0x02 | |
+| 0x02 | VER | RO | 0x03 | |
 | 0x03 | CTRL | RW | 0x00 | [0] RUN, [1] FREE, [2] LFSR_RUN, [3] LFSR_GATED, [4] FMAX_EN, [5] FMAX_INV, [6] UIOOE |
 | 0x04 | SRCA | RW | 0x00 | [4:0] channel A source, [7:5] DTAP (delay-chain tap for source 19) |
 | 0x05 | SRCB | RW | 0x08 | [4:0] channel B source, [7:5] DBG (debug byte select) |
@@ -63,7 +63,7 @@ Unmapped addresses (0x12-0x7F) read 0x00 and ignore writes. CTRL/SRCA/SRCB/TIMIN
 Debug byte select (SRCB[7:5]): 0 LFSR[7:0], 1 LFSR[15:8], 2 CNTA[7:0], 3 CNTB[7:0], 4 STATUS, 5 FFAIL, 6 MISC, 7 CNTA[15:8].
 
 ## 5. Sources and measurement
-Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (13 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21–31 constant 0.
+Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (13 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21 art ring (25-stage INV ring, identical to 0–15, whose stage 12 also drives the ~19 fF Metal4 author-name art as a wire load: f(0–15 mean)/f(21) − 1 is a per-die Metal4-capacitance-vs-drive index); 22–31 constant 0. In pin-strap mode source 21 is bank 1, s = 5.
 
 A source ring oscillates only when `ena & (CTRL.RUN | PINMODE)` and it is selected by SRCA or SRCB. At most two rings run at a time.
 

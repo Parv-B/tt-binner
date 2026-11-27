@@ -72,7 +72,7 @@ DEFAULT_MODEL = {
 INV_ITEMS = [f"R{i:02d}" for i in range(16)]
 DCH_ITEMS = [f"DCH{k}" for k in range(8)]
 TAP_ITEMS = [f"T{k}" for k in range(8)]
-RING_ITEMS = INV_ITEMS + ["NAND", "NOR", "FO4"] + DCH_ITEMS + ["CLK2"]
+RING_ITEMS = INV_ITEMS + ["NAND", "NOR", "FO4", "ART"] + DCH_ITEMS + ["CLK2"]
 PUF_PAIRS = [(2 * n, 2 * n + 1) for n in range(8)] + [(i, i + 8) for i in range(8)]
 SCHEMA_COLUMNS = ["chip_id", "fingerprint", "run_id", "t_s", "stage", "test", "item", "rep",
                   "x", "y", "unit", "aux", "temp_c", "flags"]
@@ -82,8 +82,8 @@ TEST_SPEC = {  # test -> (allowed stages, unit, item regex)
     "readback": ({1}, "bool", r"^[A-Z_0-9]+$"),
     "lfsr_kat": ({1}, "bool", r"^N=\d+$"),
     "clk2_kat": ({1}, "count", r"^CLK2$"),
-    "pinmode": ({1}, "Hz", r"^(R\d\d|NAND|NOR|FO4|DCH[0-7])$"),
-    "ring": ({2, 5}, "Hz", r"^(R(0\d|1[0-5])|NAND|NOR|FO4|DCH[0-7]|CLK2)$"),
+    "pinmode": ({1}, "Hz", r"^(R\d\d|NAND|NOR|FO4|ART|DCH[0-7])$"),
+    "ring": ({2, 5}, "Hz", r"^(R(0\d|1[0-5])|NAND|NOR|FO4|ART|DCH[0-7]|CLK2)$"),
     "fmax_pt": ({3}, "frac", r"^T[0-7]$"),
     "fmax": ({3}, "Hz", r"^T[0-7]$"),
     "fmax_inv": ({3}, "bool", r"^T[0-7]$"),
@@ -546,14 +546,23 @@ def pop_summary(values: np.ndarray, B: int, rng, log: bool = True) -> dict:
 # (b) die-to-die distributions
 # ======================================================================================
 def per_chip_metrics(rs: pd.DataFrame, temps: pd.Series, model: dict) -> pd.DataFrame:
-    """Per-chip structure frequencies (Hz): mean INV, NAND, NOR, FO4 and derived delays."""
+    """Per-chip structure frequencies (Hz): mean INV, NAND, NOR, FO4 and derived delays.
+
+    ART (VER >= 0x03) is a PUF-identical INV ring with ~19 fF of Metal4 name art
+    on one stage. `art_load` = f_inv_mean / f_art - 1 is its fractional period
+    increase over the mean INV ring: a per-die Metal4-capacitance-vs-drive index
+    (DECISIONS.md D-ART-RO). NaN on v0.2 silicon, which has no ART ring."""
     rows = []
     for c, g in rs.groupby("chip"):
         f = dict(zip(g["item"], g["f"]))
         inv = [f[i] for i in INV_ITEMS if i in f]
         r = {"chip": c, "n_inv": len(inv),
              "f_inv_mean": float(np.mean(inv)) if inv else np.nan,
-             "f_nand": f.get("NAND", np.nan), "f_nor": f.get("NOR", np.nan), "f_fo4": f.get("FO4", np.nan)}
+             "f_nand": f.get("NAND", np.nan), "f_nor": f.get("NOR", np.nan), "f_fo4": f.get("FO4", np.nan),
+             "f_art": f.get("ART", np.nan)}
+        r["art_load"] = (r["f_inv_mean"] / r["f_art"] - 1
+                         if np.isfinite(r["f_inv_mean"]) and np.isfinite(r["f_art"]) and r["f_art"] > 0
+                         else np.nan)
         for kind, key in (("INV", "f_inv_mean"), ("NAND", "f_nand"), ("NOR", "f_nor"), ("FO4", "f_fo4")):
             st = model["structures"][kind]
             r["tpd_" + kind.lower() + "_ps"] = 1e12 / (2 * st["stages"] * r[key]) if np.isfinite(r[key]) else np.nan

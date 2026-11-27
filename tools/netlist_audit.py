@@ -175,7 +175,7 @@ def audit_netlist(nl, label):
             inst = nl.insts[name]
             pin = "A1" if kind in (1, 2) else pvlib.loop_pin(inst.cell)
             # kind 0/3 stage 0 is a NAND2 gate cell: prev on A1.
-            if kind in (0, 3) and idx == 0:
+            if kind in (0, 3, 4) and idx == 0:
                 pin = "A1"
             net = inst.pins.get(pin)
             if net is None:
@@ -239,7 +239,7 @@ def audit_netlist(nl, label):
                           (prefix, role, n),
                           ring=prefix, missing=[m[0] for m in missing][:10],
                           extra=[e[0] for e in extra][:10], extra_count=len(extra))
-        elif kind in (0, 3) and 0 in stages:
+        elif kind in (0, 3, 4) and 0 in stages:
             # stage 0 gate: A2 tied to the ring's own top-level 'en' -- not notouch_,
             # so we only sanity-check it is driven by something external (single driver).
             g0 = nl.insts[stages[0]]
@@ -447,8 +447,8 @@ def render_markdown(results):
     lines.append("## Checks performed")
     lines.append("")
     lines.append("- Stage census (missing/extra) for each of the 16 PUF/INV rings (N=%d), "
-                  "the NAND ring (N=%d), the NOR ring (N=%d), the FO4 ring (N=%d)." %
-                  (pvlib.N_STG, pvlib.N_STG, pvlib.N_STG, pvlib.N_FO4))
+                  "the NAND ring (N=%d), the NOR ring (N=%d), the FO4 ring (N=%d), the art ring (N=%d)." %
+                  (pvlib.N_STG, pvlib.N_STG, pvlib.N_STG, pvlib.N_FO4, pvlib.N_STG))
     lines.append("- Exact cell type/drive strength for every notouch_ instance (resize detection).")
     lines.append("- Ring loop connectivity (stage i driven by stage (i-1) mod N, tap driven by stage N-1).")
     lines.append("- Enable wiring: NAND ring en_buf_notouch_ fans out to exactly all N stage A2 pins; "

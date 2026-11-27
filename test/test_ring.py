@@ -13,7 +13,7 @@ zero contribution to the loop period are checked separately by `make struct`
 """
 
 from binner_tb import (
-    CMD, CTRL, C_RUN, DEAD_SRCS, K_START, N_RINGS, SRCA, SRC_DCHAIN,
+    CMD, CTRL, C_RUN, DEAD_SRCS, K_START, N_EN, N_RINGS, RING_SRCS, SRCA, SRC_ART, SRC_DCHAIN,
     SRC_NAND, S_DONE, S_SEEN_A, S_SEEN_B, TAPPOS, TB, chain_ring_freq_hz,
     gate_len, pack_srca, read_ring_enables, ring_freq_hz, rtl_only,
 )
@@ -45,9 +45,9 @@ async def test_ring_enable_sweep(dut):
         assert sum(en) <= 2, f"{where}: more than two rings enabled: {en}"
         expect = set()
         if run and ena:
-            if srca < 20:
+            if srca in RING_SRCS:
                 expect.add(srca)
-            if srcb < 20:
+            if srcb in RING_SRCS:
                 expect.add(srcb)
         got = {i for i, v in enumerate(en) if v}
         assert got == expect, f"{where}: SRCA={srca} SRCB={srcb} RUN={run} ena={ena}: enabled {got}, expected {expect}"
@@ -55,7 +55,8 @@ async def test_ring_enable_sweep(dut):
     combos = [
         (0, 8, 1, 1), (19, 0, 1, 1), (5, 5, 1, 1), (0, 19, 1, 1),
         (16, 17, 1, 1), (18, 19, 1, 1), (0, 8, 0, 1), (0, 8, 1, 0),
-        (20, 21, 1, 1), (31, 20, 1, 1), (19, 19, 1, 1),
+        (20, 21, 1, 1), (31, 20, 1, 1), (19, 19, 1, 1), (21, 0, 1, 1),
+        (21, 22, 1, 1), (21, 21, 1, 1), (21, 8, 0, 1),
     ]
     combos += [(tb.rng.randrange(32), tb.rng.randrange(32), tb.rng.randrange(2), 1)
                for _ in range(12)]
@@ -80,7 +81,7 @@ async def test_ring_ena_gates_everything(dut):
     dut.ena.value = 0
     for _ in range(20):
         await tb.cycles(5)
-        assert read_ring_enables(dut) == [0] * 20, "a ring is enabled with ena=0"
+        assert read_ring_enables(dut) == [0] * N_EN, "a ring is enabled with ena=0"
     dut.ena.value = 1
     await tb.cycles(2)
     assert sum(read_ring_enables(dut)) == 2, "rings did not re-enable when ena returned to 1"
@@ -103,7 +104,7 @@ async def test_ring_oscillation_functional(dut):
     (en_buf_notouch_) rather than driving every stage's A2 pin directly."""
     tb = TB(dut, "test_ring_oscillation_functional")
     await tb.start(period_ns=CLK_NS)
-    for idx in range(N_RINGS):   # 0..18: identical rings, NAND, NOR, FO4
+    for idx in list(range(N_RINGS)) + [SRC_ART]:   # 0..18 + 21: PUF, NAND, NOR, FO4, art
         await tb.wr(SRCA, idx, DEAD_SRCS[0])
         await tb.wr(CTRL, C_RUN)
         await tb.wr(CMD, K_START)

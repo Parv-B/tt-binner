@@ -66,7 +66,7 @@ async def test_smoke(dut):
     assert int(dut.uio_oe.value) == 0, "uio must be inputs after reset"
 
     ids = await rd(dut, 0x00, 3)
-    assert ids == [0x42, 0x4E, 0x02], f"ID/VER readback {ids}"
+    assert ids == [0x42, 0x4E, 0x03], f"ID/VER readback {ids}"
 
     # SRCA/SRCB registers (0x04/0x05) carry the 5-bit source in bits[4:0]
     await wr(dut, 0x04, 20)              # SRCA = clk/2

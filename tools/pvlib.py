@@ -44,11 +44,11 @@ N_FO4 = 13    # stages: FO4 ring only (project.v localparam N_FO4; was 25 pre-90
 N_STAGES = N_STG   # back-compat alias; DO NOT use for the FO4 ring -- see RINGS
 TAPPOS = [3, 4, 5, 6, 8, 10, 12, 14]   # DLYD_1 stages before each Fmax tap
 N_DLY = 14
-KIND_NAMES = {0: "INV", 1: "NAND", 2: "NOR", 3: "FO4"}
+KIND_NAMES = {0: "INV", 1: "NAND", 2: "NOR", 3: "FO4", 4: "ART"}  # ART: INV ring + Metal4 art load
 # (instance-path prefix, KIND, src index, stage count N for *this* ring)
 RINGS = ([("g_puf[%d].u_ring" % i, 0, i, N_STG) for i in range(16)] +
          [("u_ring_nand", 1, 16, N_STG), ("u_ring_nor", 2, 17, N_STG),
-          ("u_ring_fo4", 3, 18, N_FO4)])
+          ("u_ring_fo4", 3, 18, N_FO4), ("u_ring_art", 4, 21, N_STG)])
 RING_N = {prefix: n for prefix, _, _, n in RINGS}
 DCHAIN = "u_dchain"
 FMAX = "u_fmax"

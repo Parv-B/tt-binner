@@ -95,7 +95,7 @@ async def test_spi_burst(dut):
         vals[CTRL - 0x03] = safe_ctrl(vals[CTRL - 0x03]) & ~C_FREE
         await tb.wr(0x03, *vals)
         got = await tb.rd(0x00, 0x12)
-        assert got[0:3] == [0x42, 0x4E, 0x02], f"trial {trial}: ID burst {got[0:3]}"
+        assert got[0:3] == [0x42, 0x4E, 0x03], f"trial {trial}: ID burst {got[0:3]}"
         for a, v in zip(addrs, vals):
             exp = v & RW_REGS[a][1]
             assert got[a] == exp, f"trial {trial}: burst reg {a:#04x} = {got[a]:#04x}, expected {exp:#04x}"
@@ -128,7 +128,7 @@ async def test_spi_abort_mid_byte(dut):
     # Aborted read in the middle of the data byte, then clean burst read.
     for k in (3, 9, 13):
         await tb.xfer([0x00, 0, 0], abort_after_bits=k)
-        assert await tb.rd(0x00, 3) == [0x42, 0x4E, 0x02], f"ID read after read abort at {k} bits"
+        assert await tb.rd(0x00, 3) == [0x42, 0x4E, 0x03], f"ID read after read abort at {k} bits"
     # Write abort in the 2nd data byte: the first data byte lands, the second must not.
     await tb.wr(TIMING, 0x00, 0x00)   # TIMING, CMD (CMD write of 0 is harmless)
     await tb.xfer([0x80 | TIMING, 0x77, 0x02], abort_after_bits=8 + 8 + 5)
@@ -190,7 +190,7 @@ async def test_spi_sck_rates(dut):
             v = tb.rng.randrange(256)
             await tb.wr(TIMING, v)
             got = await tb.rd(0x00, 7)   # ID0,ID1,VER,CTRL,SRCA,SRCB,TIMING
-            assert got[0:3] == [0x42, 0x4E, 0x02] and got[TIMING] == v, (
+            assert got[0:3] == [0x42, 0x4E, 0x03] and got[TIMING] == v, (
                 f"clk {period} ns, SCK=clk/{div}: read {got}, TIMING {v:#04x}")
             await tb.wr(SRCA, v & 0x1F, (v ^ 0xFF) & 0x1F)
             assert await tb.rd(SRCA, 2) == [v & 0x1F, (v ^ 0xFF) & 0x1F], f"clk {period} ns, SCK=clk/{div}: SRCA/SRCB burst"

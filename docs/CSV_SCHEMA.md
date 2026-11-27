@@ -23,7 +23,7 @@ The file is tidy (long) format: one measurement per row, UTF-8, comma-separated,
 | flags | str | `;`-separated flags: `OVF`, `NOSEEN`, `TIMEOUT`, `SIM`, `PINMODE`, `SUSPECT` |
 
 ## Items
-Rings: `R00`..`R15` (identical INV rings, sources 0-15), `NAND` (16), `NOR` (17), `FO4` (18), `DCH0`..`DCH7` (source 19 with DTAP = 0..7), `CLK2` (source 20).
+Rings: `R00`..`R15` (identical INV rings, sources 0-15), `NAND` (16), `NOR` (17), `FO4` (18), `DCH0`..`DCH7` (source 19 with DTAP = 0..7), `CLK2` (source 20), `ART` (21, the art ring; VER >= 0x03 only).
 Fmax taps: `T0`..`T7` (stage counts 3,4,5,6,8,10,12,14).
 
 ## Tests

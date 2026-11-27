@@ -8,9 +8,11 @@ GF180MCU 7-track standard-cell library as the rest of the tile:
 
 - **Ring bank.** 16 identical 25-stage inverter rings (used as RO-PUFs and for
   within-die/die-to-die variation statistics), plus one 25-stage NAND2 ring, one
-  25-stage NOR2 ring, and one 13-stage fan-out-4-loaded INV ring. Comparing the
-  NAND/NOR ring frequency against the INV rings gives an NMOS-vs-PMOS drive-strength
-  skew signature. At most two rings run at a time (selected independently on channel
+  25-stage NOR2 ring, one 13-stage fan-out-4-loaded INV ring, and an "art ring"
+  (source 21): a copy of the INV rings with one stage loaded by about 19 fF of
+  Metal4 that spells the designer's name. Comparing the NAND/NOR ring frequency
+  against the INV rings gives an NMOS-vs-PMOS drive-strength skew signature; the
+  art ring's slowdown against them tracks top-metal capacitance per die. At most two rings run at a time (selected independently on channel
   A and channel B), and every ring's enable fan-in is hand-instantiated and
   `dont_touch`-protected so the hardening flow cannot resize or buffer-insert inside
   the structures being measured (verified post-route by `tools/netlist_audit.py`).
@@ -57,9 +59,9 @@ demo board or against the project's own cocotb-based virtual demo board:
 2. For a manual first check without the full script, read back the ID registers over
    bit-banged SPI mode 0 (`ui_in[0]`=CS_N, `ui_in[1]`=SCK, `ui_in[2]`=MOSI,
    `uo_out[3]`=MISO, `f_SCK <= f_clk/8`): register 0x00 should read `0x42` ('B'),
-   0x01 `0x4E` ('N'), 0x02 the version `0x02`.
+   0x01 `0x4E` ('N'), 0x02 the version `0x03`.
 3. To measure a ring pair by hand: write SRCA/SRCB (register 0x04/0x05, ring index
-   0-20), set TIMING.GEXP (0x06), set CTRL.RUN (0x03 bit 0), pulse CMD.START (0x07
+   0-21), set TIMING.GEXP (0x06), set CTRL.RUN (0x03 bit 0), pulse CMD.START (0x07
    bit 0), poll STATUS.DONE (0x08 bit 1 / `uo_out[6]`), then read CNTA/CNTB
    (0x09-0x0C). Frequency = `count * f_clk / 2^GEXP`. Source 20 (`clk/2`) is a
    built-in known-answer check: `count` should equal `2^GEXP / 2` within +/-1.

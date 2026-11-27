@@ -24,16 +24,22 @@
  *   16     NAND2 ring   17 NOR2 ring   18 FO4 INV ring
  *   19     delay-chain ring (tap from DTAP)
  *   20     clk / 2 test source (known answer; gate-level test)
- *   21..31 constant 0
+ *   21     art ring: INV ring whose stage 12 also drives the Metal4 name art
+ *          (~19 fF; per-die Metal4 capacitance monitor vs. sources 0..15)
+ *   22..31 constant 0
  */
 
 `default_nettype none
 
 // Hard macro from tools/make_art.py; empty here so RTL simulation and
-// synthesis see a pinless blackbox. test/binner_art_stub.v plays the same role
-// for the gate-level netlist.
+// synthesis see a blackbox with one load pin. test/binner_art_stub.v plays the
+// same role for the gate-level netlist.
 (* blackbox *) (* keep *)
-module binner_art ();
+module binner_art (
+    /* verilator lint_off UNUSEDSIGNAL */
+    input wire A   // passive Metal4 load
+    /* verilator lint_on UNUSEDSIGNAL */
+);
 endmodule
 
 module tt_um_parv_b_binner (
@@ -55,7 +61,7 @@ module tt_um_parv_b_binner (
   localparam integer N_FO4  = 13;   // stages in the FO4 ring (4x the cells per stage)
   localparam [7:0]   ID0    = 8'h42; // 'B'
   localparam [7:0]   ID1    = 8'h4E; // 'N'
-  localparam [7:0]   VER    = 8'h02;
+  localparam [7:0]   VER    = 8'h03;
 
   // ---------------------------------------------------------------------------
   // Reset and asynchronous pin synchronisers
@@ -139,19 +145,30 @@ module tt_um_parv_b_binner (
   wire [31:0] src;   // source outputs
   wire [19:0] ren;   // ring enables
 
+  // `ld` is only meaningful on the art ring (KIND 4); every other ring leaves it open.
+  /* verilator lint_off PINCONNECTEMPTY */
   genvar gi;
   generate
     for (gi = 0; gi < 20; gi = gi + 1) begin : g_en
       assign ren[gi] = run & ((src_a == gi) | (src_b == gi));
     end
     for (gi = 0; gi < N_PUF; gi = gi + 1) begin : g_puf
-      binner_ring #(.N(N_STG), .KIND(0), .IDX(gi)) u_ring (.en(ren[gi]), .out(src[gi]));
+      binner_ring #(.N(N_STG), .KIND(0), .IDX(gi)) u_ring (.en(ren[gi]), .out(src[gi]), .ld());
     end
   endgenerate
 
-  binner_ring #(.N(N_STG), .KIND(1), .IDX(16)) u_ring_nand (.en(ren[16]), .out(src[16]));
-  binner_ring #(.N(N_STG), .KIND(2), .IDX(17)) u_ring_nor  (.en(ren[17]), .out(src[17]));
-  binner_ring #(.N(N_FO4), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]));
+  binner_ring #(.N(N_STG), .KIND(1), .IDX(16)) u_ring_nand (.en(ren[16]), .out(src[16]), .ld());
+  binner_ring #(.N(N_STG), .KIND(2), .IDX(17)) u_ring_nor  (.en(ren[17]), .out(src[17]), .ld());
+  binner_ring #(.N(N_FO4), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]), .ld());
+  /* verilator lint_on PINCONNECTEMPTY */
+
+  // Art ring (source 21): a PUF-identical INV ring with the Metal4 name art as a
+  // wire load on one stage. Compared against the mean of sources 0..15 it gives
+  // a per-die Metal4 capacitance figure. See DECISIONS.md D-ART-RO.
+  wire ren_art = run & ((src_a == 5'd21) | (src_b == 5'd21));
+  wire art_ld_notouch_;
+  binner_ring #(.N(N_STG), .KIND(4), .IDX(21)) u_ring_art (
+      .en(ren_art), .out(src[21]), .ld(art_ld_notouch_));
 
   // Delay chain: Fmax path, or ring when selected as a source.
   wire [7:0] dtaps;
@@ -168,7 +185,7 @@ module tt_um_parv_b_binner (
     else         clk_div2 <= ~clk_div2;
   end
   assign src[20]    = clk_div2;
-  assign src[31:21] = 11'd0;
+  assign src[31:22] = 10'd0;
 
   wire clk_a = src[src_a];
   wire clk_b = src[src_b];
@@ -280,9 +297,10 @@ module tt_um_parv_b_binner (
 
   wire _unused = &{uio_in, 1'b0};
 
-  // Silicon art (author name on Metal4): no pins, no logic. Geometry comes
-  // from macros/binner_art.gds via MACROS in src/config.json. See DECISIONS.md D-ART.
+  // Silicon art (author name on Metal4): one connected shape, pin A only, no
+  // logic. It is the wire load of the art ring above. Geometry comes from
+  // macros/binner_art.gds via MACROS in src/config.json. See DECISIONS.md D-ART-RO.
   (* keep *)
-  binner_art art ();
+  binner_art art (.A(art_ld_notouch_));
 
 endmodule

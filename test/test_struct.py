@@ -60,7 +60,7 @@ async def test_struct_smoke(dut):
     tb = TB(dut, "test_struct_smoke")
     await tb.start(period_ns=100.0)
     ids = await tb.rd(0x00, 3)
-    assert ids == [0x42, 0x4E, 0x02], f"ID/VER readback in structural mode: {ids}"
+    assert ids == [0x42, 0x4E, 0x03], f"ID/VER readback in structural mode: {ids}"
     assert int(dut.uio_oe.value) == 0
 
 

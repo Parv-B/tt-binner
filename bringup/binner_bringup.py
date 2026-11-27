@@ -16,7 +16,7 @@ or:
     import binner_bringup
     binner_bringup.main(chip_id="parv01")
 
-Register map: docs/SPEC.md v0.2 (VER=0x02). CSV schema: docs/CSV_SCHEMA.md.
+Register map: docs/SPEC.md v0.3 (VER=0x03). CSV schema: docs/CSV_SCHEMA.md.
 
 Structure
   1. small portability shims (config.ini reader, CSV writer, time helpers)
@@ -78,7 +78,7 @@ CSV_SCHEMA_VERSION = 1
 # ---------------------------------------------------------------------------
 REG_ID0 = 0x00
 REG_ID1 = 0x01
-REG_VER = 0x02
+REG_VER = 0x02          # register address (the value is VER_EXPECT)
 REG_CTRL = 0x03
 REG_SRCA = 0x04
 REG_SRCB = 0x05
@@ -97,7 +97,7 @@ REG_MISC = 0x11
 
 ID0_EXPECT = 0x42
 ID1_EXPECT = 0x4E
-VER_EXPECT = 0x02
+VER_EXPECT = 0x03       # v0.3: source 21 = art ring (DECISIONS.md D-ART-RO)
 
 CTRL_RUN = 0x01
 CTRL_FREE = 0x02
@@ -131,6 +131,7 @@ SRC_NOR = 17
 SRC_FO4 = 18
 SRC_DCH = 19
 SRC_CLK2 = 20
+SRC_ART = 21
 
 # ui_in bit positions
 UI_CS_N = 0
@@ -157,7 +158,7 @@ FMAX_TAP_STAGES = (3, 4, 5, 6, 8, 10, 12, 14)
 # structure in its own right (known-answer cross-check) and as the forced
 # channel-B partner for the DCH taps (see the DCH note below).
 INV_RING_ITEMS = ["R%02d" % i for i in range(16)]
-OTHER_RING_ITEMS = ["NAND", "NOR", "FO4"]
+OTHER_RING_ITEMS = ["NAND", "NOR", "FO4", "ART"]
 DCH_ITEMS = ["DCH%d" % k for k in range(8)]
 ALL_RING_ITEMS = INV_RING_ITEMS + OTHER_RING_ITEMS + ["CLK2"] + DCH_ITEMS
 
@@ -180,6 +181,8 @@ def item_source(item):
         return SRC_FO4, 0
     if item == "CLK2":
         return SRC_CLK2, 0
+    if item == "ART":
+        return SRC_ART, 0
     raise ValueError("unknown item " + item)
 
 
@@ -625,7 +628,7 @@ def stage1_sanity(hal, regs, csv, log):
       hal.temp_c(), "" if id_ok else "SUSPECT")
     if not id_ok:
         log("ABORT: BINNER did not respond as expected on register 0x00-0x02 "
-            "(got %r, expected [0x42,0x4E,0x02]). Check: SPI wiring "
+            "(got %r, expected [0x42,0x4E,0x03]). Check: SPI wiring "
             "(ui_in[0..2]/uo_out[3]), tile selection/address, and that "
             "reset_project(False) was called after enable(). Aborting "
             "further stages." % ids)

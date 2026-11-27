@@ -78,7 +78,7 @@ RW_REGS = {
 # RO registers with a defined, input-independent reset value.
 # MISC is checked separately: it reflects live inputs (ena, pinmode, ...).
 RO_RESET = {
-    ID0: 0x42, ID1: 0x4E, VER: 0x02, CMD: 0x00, STATUS: 0x00,
+    ID0: 0x42, ID1: 0x4E, VER: 0x03, CMD: 0x00, STATUS: 0x00,
     CNTA_L: 0, CNTA_H: 0, CNTB_L: 0, CNTB_H: 0,
     LFSR_L: 0xE1, LFSR_H: 0xAC, FFAIL: 0x00, FCAP: 0x00,
 }
@@ -95,9 +95,11 @@ DBG_LFSR_L, DBG_LFSR_H, DBG_CNTA_L, DBG_CNTB_L, DBG_STATUS, DBG_FFAIL, DBG_MISC,
 N_PUF_RINGS = 16                       # sources 0..15: identical INV rings
 SRC_NAND, SRC_NOR, SRC_FO4, SRC_DCHAIN = 16, 17, 18, 19
 SRC_CLK2 = 20                          # clk/2 known-answer source
-DEAD_SRCS = list(range(21, 32))        # constant 0
-RING_SRCS = list(range(0, 20))         # sources gated by ren[19:0] (has an `en` input)
+SRC_ART = 21                           # art ring: INV ring loaded by the Metal4 name (v0.3)
+DEAD_SRCS = list(range(22, 32))        # constant 0
+RING_SRCS = list(range(0, 20)) + [SRC_ART]   # sources with a ring `en` input
 N_RINGS = 19                           # binner_ring instances: sources 0..18 (19 is the delay chain)
+N_EN = SRC_ART + 1                     # read_ring_enables() length: index = source number
 
 # Stage counts per ring source, for structural oscillation-period checks
 # (period = 2 * N * t_arc). project.v: N_STG = 25 (INV/NAND/NOR rings),
@@ -106,6 +108,7 @@ STAGE_COUNTS = {i: 25 for i in range(N_PUF_RINGS)}
 STAGE_COUNTS[SRC_NAND] = 25
 STAGE_COUNTS[SRC_NOR] = 25
 STAGE_COUNTS[SRC_FO4] = 13
+STAGE_COUNTS[SRC_ART] = 25
 
 TAPPOS = (3, 4, 5, 6, 8, 10, 12, 14)    # binner_dchain stage counts at each Fmax tap
 
@@ -381,12 +384,16 @@ class TB:
 
 
 def ring_en_handles(dut):
-    """Hierarchical probes of the 20 ring enables (sources 0..19). RTL only."""
+    """Hierarchical probes of the ring enables, sources 0..19 and 21. RTL only."""
     up = dut.user_project
     h = [up.g_puf[i].u_ring.en for i in range(N_PUF_RINGS)]
     h += [up.u_ring_nand.en, up.u_ring_nor.en, up.u_ring_fo4.en, up.u_dchain.ring_en]
+    h += [up.u_ring_art.en]
     return h
 
 
 def read_ring_enables(dut):
-    return [int(h.value) for h in ring_en_handles(dut)]
+    """Ring enables indexed by source number (length N_EN). Source 20 (clk/2)
+    has no enable and always reads 0."""
+    v = [int(h.value) for h in ring_en_handles(dut)]
+    return v[:SRC_CLK2] + [0] + v[SRC_CLK2:]

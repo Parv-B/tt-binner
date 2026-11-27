@@ -15,6 +15,10 @@
  *                dont-touch pins: RSZ-3006, found in the first CI harden).
  * KIND 2 (NOR) : every stage = NOR2 (A1 = loop, A2 = en_b)
  * KIND 3 (FO4) : as INV, and every stage output also drives 3 dummy INV_1 loads
+ * KIND 4 (ART) : as INV, and stage LD_STG's output is also brought out on `ld`,
+ *                where project.v hangs the Metal4 name art (binner_art) on it as
+ *                a ~19 fF wire load (DECISIONS.md D-ART-RO). `ld` is 0 for every
+ *                other KIND.
  *
  * When en = 0 every node is at a static, known level (NAND/INV: stage 0 high,
  * then alternating; NOR: all stage outputs low), so a disabled ring can never
@@ -34,11 +38,13 @@
 
 module binner_ring #(
     parameter integer N    = 25,  // number of inverting stages (odd)
-    parameter integer KIND = 0,   // 0 INV, 1 NAND, 2 NOR, 3 FO4
-    parameter integer IDX  = 0    // source index (for simulation plusargs only)
+    parameter integer KIND = 0,   // 0 INV, 1 NAND, 2 NOR, 3 FO4, 4 ART
+    parameter integer IDX  = 0,   // source index (for simulation plusargs only)
+    parameter integer LD_STG = 12 // KIND 4: stage whose output drives `ld`
 ) (
     input  wire en,   // 1 = oscillate
-    output wire out   // ring output (through tap cell)
+    output wire out,  // ring output (through tap cell)
+    output wire ld    // KIND 4: stage LD_STG output (external load); else 0
 );
 
 `ifdef BINNER_BEHAV
@@ -62,7 +68,8 @@ module binner_ring #(
     end
   end
   assign out = ~osc;
-  wire _unused_n = &{1'b0, N[0], KIND[0]};
+  assign ld  = 1'b0;   // the art is a passive load: nothing to model here
+  wire _unused_n = &{1'b0, N[0], KIND[0], LD_STG[0]};
 `else
   // ---------------------------------------------------------------------------
   // Physical ring: hand-instantiated cells only.
@@ -112,6 +119,14 @@ module binner_ring #(
   endgenerate
 
   (* keep *) `BINNER_INV1 tap_notouch_ (.I(ring_notouch_[N-1]), .ZN(out));
+  generate
+    if (KIND == 4) begin : g_ld
+      assign ld = ring_notouch_[LD_STG];
+    end else begin : g_nold
+      assign ld = 1'b0;
+      wire _unused_ld = &{1'b0, LD_STG[0]};
+    end
+  endgenerate
   /* verilator lint_on PINMISSING */
   /* verilator lint_on UNOPTFLAT */
   wire _unused_idx = &{1'b0, IDX[0]};

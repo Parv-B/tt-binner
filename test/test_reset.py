@@ -4,7 +4,7 @@
 
 from binner_tb import (
     CMD, CTRL, K_START, MISC, M_ENA, RO_RESET, RW_REGS, SRCA, SRC_CLK2,
-    STATUS, S_BUSY, S_DONE, TB, TIMING, gl_safe, read_ring_enables, rtl_only,
+    N_EN, STATUS, S_BUSY, S_DONE, TB, TIMING, gl_safe, read_ring_enables, rtl_only,
 )
 import cocotb
 from cocotb.triggers import Timer
@@ -119,7 +119,7 @@ async def test_rings_off_after_reset(dut):
     tb = TB(dut, "test_rings_off_after_reset")
     await tb.start()
     en = read_ring_enables(dut)
-    assert en == [0] * 20, f"ring enables after reset: {en}"
+    assert en == [0] * N_EN, f"ring enables after reset: {en}"
     # Also after reset from a running state.
     await tb.wr(CTRL, 1)  # RUN with reset SRCA=0, SRCB=8
     en = read_ring_enables(dut)
@@ -127,7 +127,7 @@ async def test_rings_off_after_reset(dut):
     dut.rst_n.value = 0
     await Timer(3, "ns")
     en = read_ring_enables(dut)
-    assert en == [0] * 20, f"ring enables during reset: {en}"
+    assert en == [0] * N_EN, f"ring enables during reset: {en}"
     dut.rst_n.value = 1
     await tb.cycles(10)
-    assert read_ring_enables(dut) == [0] * 20
+    assert read_ring_enables(dut) == [0] * N_EN
