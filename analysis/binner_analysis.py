@@ -549,10 +549,12 @@ def per_chip_metrics(rs: pd.DataFrame, temps: pd.Series, model: dict) -> pd.Data
     """Per-chip structure frequencies (Hz): mean INV, NAND, NOR, FO4 and derived delays.
 
     ART (VER >= 0x03) is a PUF-identical INV ring loaded on one stage by the
-    Metal4 name art (~19 fF) and its ~250 um routed feed (~20 fF). `art_load` =
-    f_inv_mean / f_art - 1 is its fractional period increase over the mean INV
-    ring: a per-die back-end wire-capacitance-vs-drive index (post-route SDF
-    predicts ~+18% at every corner; the per-die spread is the signal)
+    ~19 fF Metal4 name art (12 um feed). `art_load` = f_inv_mean / f_art - 1 is
+    its fractional period difference from the mean INV ring: a back-end
+    wire-capacitance-vs-drive index. The art adds ~+5% of period, but the
+    value also carries a fixed layout offset (post-route SDF predicts -6% at
+    nom_tt, because the INV rings' own routing spread is ~20%). So compare
+    `art_load` across dies; a single die's value means little on its own
     (DECISIONS.md D-ART-RO). NaN on v0.2 silicon, which has no ART ring."""
     rows = []
     for c, g in rs.groupby("chip"):

@@ -543,3 +543,35 @@ bottom-right, facing the ring bank. The shape is otherwise identical: 204.3 um^2
 092e95b art exactly. Note that in 092e95b the delay chain spread across the tile
 (bbox x 4.5-272 um, vs the bottom band on main), so the comparison for this run
 also covers the delay-chain/Fmax SDF predictions, not just the rings.
+
+**Attempt 1 result, 39f98dc: fully green, and it worked.** gds, precheck, gl_test and
+viewer pass; LVS 0, routing DRC 0, antenna 0 nets and 0 diodes. The art landed at
+(218.96, 47.04) and the feed fell from 252.6 um to **12.3 um** (8.9 um Metal4,
+2.2 um Metal3, 1.1 um Metal2; ~1 fF). The name is now ~95% of the extra load.
+
+- **What the art does, from the SDF directly** (nom_tt): stage 12 of the art ring
+  (the stage driving the art) has a 0.356 ns cell delay against a 0.147 ns median
+  for the ring's other INV stages, i.e. **+0.21 ns**. That matches an INV_1 driving
+  ~20 fF extra (the 19.0 fF model). In 092e95b the same stage was +0.62 ns: art
+  plus the 253 um feed. Over a 25-stage ring that is ~5% of the period.
+- **The PUF-mean reference has a large layout offset.** `sdf_predict` puts the art
+  ring at **0.942x** the PUF-ring mean period (ss 0.945, ff 0.941). It is faster
+  than the average PUF ring despite the art, because the 16 PUF rings differ by
+  ~20% (sd/mean) from their own routing while the art ring now packs tightly
+  beside its load. The 5-20% "sanity window" in the merge rule assumed the PUF
+  mean was a clean unloaded reference. It is not, so the window is replaced by
+  the per-stage check above, which the run passes. Consequence for silicon:
+  `art_load` = f(0-15 mean)/f(21) - 1 = (fixed layout offset) + (art term) +
+  (local mismatch). A +/-10% die-to-die change in wire capacitance moves the art
+  term by only ~0.5% of period, about the size of ring-to-ring mismatch. So
+  `art_load` is a population-level monitor (shuttle-mate data), weak on a
+  single die. SPEC, info.md, project.v and the analysis docstring say so.
+- **Others vs 6e098f2** (nom_tt): PUF mean +4.2% (7.845 -> 8.171 ns), spread 17.0%
+  -> 20.1%; NAND +2.6%; NOR -4.2%; FO4 +2.1%. Delay-chain Fmax T_min per tap is
+  +1.1% to +2.5% (tap 0 13.11 -> 13.44 ns, tap 7 54.52 -> 55.10 ns). Utilization
+  86.2% -> 88.5%; hold WS 0.142 ns; setup WS +16.96 ns; max-slew 470 -> 508 (the
+  pre-existing unbuffered ring structures). The other ring shifts are design-time
+  predictions; silicon is read against each run's own SDF.
+- **Decision:** merge this layout (the user's choice: shorten the feed, then merge
+  the better result). 39f98dc beats 092e95b because the name, not a Metal3 feed,
+  is what the art ring measures.
