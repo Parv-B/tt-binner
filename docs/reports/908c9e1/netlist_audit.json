@@ -1,0 +1,34 @@
+{
+  "results": [
+    {
+      "label": "tt_submission powered netlist",
+      "path": "ci_artifacts\\908c9e1\\tt_submission\\tt_submission\\tt_um_parv_b_binner.v",
+      "module": "tt_um_parv_b_binner",
+      "n_insts": 3335,
+      "pass": true,
+      "n_fail": 0,
+      "n_warn": 0,
+      "findings": []
+    },
+    {
+      "label": "GDS_logs final nl.v (unpowered)",
+      "path": "ci_artifacts\\908c9e1\\GDS_logs\\runs\\wokwi\\final\\nl\\tt_um_parv_b_binner.nl.v",
+      "module": "tt_um_parv_b_binner",
+      "n_insts": 3335,
+      "pass": true,
+      "n_fail": 0,
+      "n_warn": 0,
+      "findings": []
+    },
+    {
+      "label": "GDS_logs final pnl.v (powered)",
+      "path": "ci_artifacts\\908c9e1\\GDS_logs\\runs\\wokwi\\final\\pnl\\tt_um_parv_b_binner.pnl.v",
+      "module": "tt_um_parv_b_binner",
+      "n_insts": 3335,
+      "pass": true,
+      "n_fail": 0,
+      "n_warn": 0,
+      "findings": []
+    }
+  ]
+}
