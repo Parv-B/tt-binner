@@ -437,6 +437,15 @@ or x > 240 um (`tools/place_extract.py` on 0cf263c), so the macro displaces only
 control-plane logic. Re-placement will still move the rings somewhat; that is what
 the report comparison above checks.
 
+**PDN halo set to 0** (after the first run, 9090730). With LibreLane's default 10 um
+macro halo, the Metal1 rails between the tile's left edge and the halo (x 3.36-14.64
+um, y 68-104 um) lost their only stripes (19.68/22.98 um sit inside the halo). PDN
+channel repair then added short Metal4 straps at x ~7.6/10.9 um, y 62.4-110.1 um.
+Those were exported as extra VPWR/VGND LEF pins, and the TT precheck pin check failed
+on them ("4 LEF errors"). All DRC, antenna and other checks passed on that run.
+With `PDN_VERTICAL_HALO`/`PDN_HORIZONTAL_HALO` = 0, every rail segment still crosses
+a regular stripe, so no repair straps are needed.
+
 **Gate-level test.** The post-route netlist instantiates `binner_art` without
 defining it, so `test/Makefile` adds `test/binner_art_stub.v` (an empty module) to
 the `GATES=yes` sources only. RTL builds get the same empty module from `project.v`.
