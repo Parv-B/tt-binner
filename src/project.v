@@ -25,7 +25,8 @@
  *   19     delay-chain ring (tap from DTAP)
  *   20     clk / 2 test source (known answer; gate-level test)
  *   21     art ring: INV ring whose stage 12 also drives the Metal4 name art
- *          (~19 fF; per-die Metal4 capacitance monitor vs. sources 0..15)
+ *          (~19 fF) via a ~250 um routed feed (~20 fF): a per-die back-end
+ *          wire-capacitance monitor vs. sources 0..15
  *   22..31 constant 0
  */
 
@@ -162,9 +163,10 @@ module tt_um_parv_b_binner (
   binner_ring #(.N(N_FO4), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]), .ld());
   /* verilator lint_on PINCONNECTEMPTY */
 
-  // Art ring (source 21): a PUF-identical INV ring with the Metal4 name art as a
-  // wire load on one stage. Compared against the mean of sources 0..15 it gives
-  // a per-die Metal4 capacitance figure. See DECISIONS.md D-ART-RO.
+  // Art ring (source 21): a PUF-identical INV ring with the Metal4 name art (and
+  // its routed feed) as a wire load on one stage. Compared against the mean of
+  // sources 0..15 it gives a per-die back-end wire-capacitance figure.
+  // See DECISIONS.md D-ART-RO.
   wire ren_art = run & ((src_a == 5'd21) | (src_b == 5'd21));
   wire art_ld_notouch_;
   binner_ring #(.N(N_STG), .KIND(4), .IDX(21)) u_ring_art (

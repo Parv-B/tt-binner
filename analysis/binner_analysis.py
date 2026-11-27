@@ -548,9 +548,11 @@ def pop_summary(values: np.ndarray, B: int, rng, log: bool = True) -> dict:
 def per_chip_metrics(rs: pd.DataFrame, temps: pd.Series, model: dict) -> pd.DataFrame:
     """Per-chip structure frequencies (Hz): mean INV, NAND, NOR, FO4 and derived delays.
 
-    ART (VER >= 0x03) is a PUF-identical INV ring with ~19 fF of Metal4 name art
-    on one stage. `art_load` = f_inv_mean / f_art - 1 is its fractional period
-    increase over the mean INV ring: a per-die Metal4-capacitance-vs-drive index
+    ART (VER >= 0x03) is a PUF-identical INV ring loaded on one stage by the
+    Metal4 name art (~19 fF) and its ~250 um routed feed (~20 fF). `art_load` =
+    f_inv_mean / f_art - 1 is its fractional period increase over the mean INV
+    ring: a per-die back-end wire-capacitance-vs-drive index (post-route SDF
+    predicts ~+18% at every corner; the per-die spread is the signal)
     (DECISIONS.md D-ART-RO). NaN on v0.2 silicon, which has no ART ring."""
     rows = []
     for c, g in rs.groupby("chip"):

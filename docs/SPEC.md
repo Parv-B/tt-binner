@@ -63,7 +63,7 @@ Unmapped addresses (0x12-0x7F) read 0x00 and ignore writes. CTRL/SRCA/SRCB/TIMIN
 Debug byte select (SRCB[7:5]): 0 LFSR[7:0], 1 LFSR[15:8], 2 CNTA[7:0], 3 CNTB[7:0], 4 STATUS, 5 FFAIL, 6 MISC, 7 CNTA[15:8].
 
 ## 5. Sources and measurement
-Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (13 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21 art ring (25-stage INV ring, identical to 0–15, whose stage 12 also drives the ~19 fF Metal4 author-name art as a wire load: f(0–15 mean)/f(21) − 1 is a per-die Metal4-capacitance-vs-drive index); 22–31 constant 0. In pin-strap mode source 21 is bank 1, s = 5.
+Sources (SRCA/SRCB): 0–15 identical 25-stage INV rings (NAND2 enable + 24 INV_1); 16 NAND2 ring (25 stages); 17 NOR2 ring (25); 18 FO4 INV ring (13 stages, each loaded by 3 dummy INV_1); 19 delay-chain ring (tap DTAP); 20 clk/2; 21 art ring (25-stage INV ring, identical to 0–15, whose stage 12 also drives the ~19 fF Metal4 author-name art through a ~250 µm routed feed of about the same capacitance: f(0–15 mean)/f(21) − 1 is a per-die back-end wire-capacitance-vs-drive index); 22–31 constant 0. In pin-strap mode source 21 is bank 1, s = 5.
 
 A source ring oscillates only when `ena & (CTRL.RUN | PINMODE)` and it is selected by SRCA or SRCB. At most two rings run at a time.
 

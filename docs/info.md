@@ -9,10 +9,10 @@ GF180MCU 7-track standard-cell library as the rest of the tile:
 - **Ring bank.** 16 identical 25-stage inverter rings (used as RO-PUFs and for
   within-die/die-to-die variation statistics), plus one 25-stage NAND2 ring, one
   25-stage NOR2 ring, one 13-stage fan-out-4-loaded INV ring, and an "art ring"
-  (source 21): a copy of the INV rings with one stage loaded by about 19 fF of
-  Metal4 that spells the designer's name. Comparing the NAND/NOR ring frequency
+  (source 21): a copy of the INV rings with one stage loaded by the Metal4 that
+  spells the designer's name (about 19 fF) plus its routed feed (about 20 fF). Comparing the NAND/NOR ring frequency
   against the INV rings gives an NMOS-vs-PMOS drive-strength skew signature; the
-  art ring's slowdown against them tracks top-metal capacitance per die. At most two rings run at a time (selected independently on channel
+  art ring's slowdown against them tracks back-end wire capacitance per die. At most two rings run at a time (selected independently on channel
   A and channel B), and every ring's enable fan-in is hand-instantiated and
   `dont_touch`-protected so the hardening flow cannot resize or buffer-insert inside
   the structures being measured (verified post-route by `tools/netlist_audit.py`).
