@@ -508,3 +508,27 @@ netlist-audit self-test PASS; Verilator lint has no new warnings; Yosys keeps
 ring's SDF-predicted period ~5-20% above the PUF mean (sanity check on the 19 fF
 model), and the other rings near the 6e098f2 baseline. Drop the branch if it is not
 green by 2026-12-03; main keeps the decorative art either way.
+
+**CI result, 092e95b: fully green.** gds, precheck, gl_test, viewer, docs and test
+all pass. LVS: 0 errors, 0 device or net differences. Antenna: 0 violating nets.
+Routing DRC: 0. The first try (3d8e75e) stopped at CheckMacroInstances because
+`binner_art.lib` lacked the threshold attributes OpenSTA requires; they are now
+copied from the PDK liberty.
+
+- **The load is the name plus its feed.** The placer put the art ring about 200
+  um from the art. Net `u_ring_art.ring_notouch_[12]` (stage 12 ZN -> stage 13 I
+  and art A) carries 252.6 um of route: 206 um Metal3, 22 um Metal2, 24 um Metal4.
+  At 0.0776 fF/um that is about 20 fF, comparable to the art's own ~19 fF. So
+  `art_load` is a back-end wire-capacitance index (roughly half the Metal4 name,
+  half Metal3 feed), not a pure Metal4 one. The route is the same on every die,
+  so die-to-die variation in `art_load` is still a real back-end signal. The
+  docs and comments say so.
+- **SDF prediction:** the art ring is 1.181x the PUF-ring mean period at
+  nom_tt (ss 1.173, ff 1.186), i.e. +17-19%, inside the 5-20% sanity window.
+- **Other rings vs 6e098f2** (nom_tt): NAND +0.2%, NOR -7.1%, FO4 +0.8%, PUF
+  mean +0.6%, PUF spread 17.0% -> 20.9%. That is the same scale of re-placement
+  reshuffle seen between earlier runs (18.3% -> 20.3% -> 17.0%), not a trend.
+- Utilization 86.2% -> 88.9% (+35 cells). Max-slew violations 470 -> 486 and
+  max-cap 1 -> 1 are the pre-existing unbuffered ring structures. Disconnected
+  pins 8 -> 9: the extra one is the report line "art has no power pins". It is
+  non-critical and left unwaived so the check still covers pin A.
