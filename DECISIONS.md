@@ -437,14 +437,19 @@ or x > 240 um (`tools/place_extract.py` on 0cf263c), so the macro displaces only
 control-plane logic. Re-placement will still move the rings somewhat; that is what
 the report comparison above checks.
 
-**PDN halo set to 0** (after the first run, 9090730). With LibreLane's default 10 um
-macro halo, the Metal1 rails between the tile's left edge and the halo (x 3.36-14.64
-um, y 68-104 um) lost their only stripes (19.68/22.98 um sit inside the halo). PDN
-channel repair then added short Metal4 straps at x ~7.6/10.9 um, y 62.4-110.1 um.
-Those were exported as extra VPWR/VGND LEF pins, and the TT precheck pin check failed
-on them ("4 LEF errors"). All DRC, antenna and other checks passed on that run.
-With `PDN_VERTICAL_HALO`/`PDN_HORIZONTAL_HALO` = 0, every rail segment still crosses
-a regular stripe, so no repair straps are needed.
+**Row-cut and PDN halos set to 0.** The first run (9090730) passed every DRC and
+antenna check but failed the TT precheck pin check ("4 LEF errors"). VPWR and VGND
+each had an extra short Metal4 pin at x ~7.6/10.9 um, y 62.4-110.1 um. Cause: CutRows
+leaves `FP_MACRO_HORIZONTAL_HALO`/`FP_MACRO_VERTICAL_HALO` (default 10 um) around
+the macro, so rows 16-25 were split and their left pieces ended at x ~14.6 um. That
+is short of the first stripe pair (19.68/22.98 um), so those Metal1 rails had no
+connection up. OpenROAD pdngen's channel repair (`RepairChannelStraps`: any followpin
+with no connection above gets a strap) then added the straps, which the LEF writer
+exported as pins. A first fix that zeroed only `PDN_*_HALO` (3ca35af) changed
+nothing, which is how the row-cut halo was identified. With all four halos at 0,
+the split rows end at the macro edge (24.64 um), past both stripes. The 10 um halo
+also explains the art run's jump to 85.7% utilization (vs ~82%): it removed about
+1900 um^2 of rows, not just the 509 um^2 macro.
 
 **Gate-level test.** The post-route netlist instantiates `binner_art` without
 defining it, so `test/Makefile` adds `test/binner_art_stub.v` (an empty module) to
