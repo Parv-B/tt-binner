@@ -12,6 +12,14 @@ library (binner_art) {
   nom_process : 1 ;
   nom_temperature : 25 ;
   nom_voltage : 3.3 ;
+  input_threshold_pct_rise : 50 ;
+  output_threshold_pct_rise : 50 ;
+  slew_lower_threshold_pct_rise : 30 ;
+  slew_upper_threshold_pct_rise : 70 ;
+  input_threshold_pct_fall : 50 ;
+  output_threshold_pct_fall : 50 ;
+  slew_lower_threshold_pct_fall : 30 ;
+  slew_upper_threshold_pct_fall : 70 ;
   cell (binner_art) {
     area : 509.286 ;
     dont_touch : true ;

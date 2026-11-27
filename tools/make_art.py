@@ -222,6 +222,12 @@ def write_lib(path, area, cap_pf):
         f.write('  pulling_resistance_unit : "1kohm" ;\n  leakage_power_unit : "1nW" ;\n')
         f.write("  capacitive_load_unit (1, pf) ;\n")
         f.write("  nom_process : 1 ;\n  nom_temperature : 25 ;\n  nom_voltage : 3.3 ;\n")
+        # OpenSTA rejects a library without these; values match the PDK's
+        # gf180mcu_fd_sc_mcu7t5v0 liberty.
+        for edge in ("rise", "fall"):
+            f.write(f"  input_threshold_pct_{edge} : 50 ;\n  output_threshold_pct_{edge} : 50 ;\n")
+            f.write(f"  slew_lower_threshold_pct_{edge} : 30 ;\n"
+                    f"  slew_upper_threshold_pct_{edge} : 70 ;\n")
         f.write(f"  cell ({CELL_NAME}) {{\n")
         f.write(f"    area : {area:.3f} ;\n")
         f.write("    dont_touch : true ;\n    dont_use : true ;\n")
