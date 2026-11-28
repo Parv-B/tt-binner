@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""BINNER silicon art: author name as a GF180MCU Metal4 macro.
+"""BINNER silicon art as a GF180MCU Metal4 macro: a dog portrait (default) or the author's name.
 
 Writes macros/binner_art.{gds,lef,svg} (and .lib in wire mode), following the
 Tiny Tapeout silicon-art guide (https://tinytapeout.com/guides/creating-silicon-art/),
@@ -17,7 +17,7 @@ Two modes:
   dots  Decorative. Each lit pixel is its own PIXEL um square on a PITCH um grid,
         so shapes never touch; no pins. (What main shipped first, 6e098f2.)
 
-  wire  Functional (default). The name is ONE connected Metal4 shape: solid
+  wire  Functional. The name is ONE connected Metal4 shape: solid
         pixels (PIXEL == PITCH), every diagonal-only pixel contact filled in so
         each glyph is a single polygon with no corner-touch, each text line
         underlined, the underlines joined by a spine, and a pin "A" at the
@@ -25,9 +25,14 @@ Two modes:
         the art ring (source 21), so the name is a per-die Metal4 capacitance
         monitor. See DECISIONS.md D-ART-RO.
 
-In both modes the LEF carries an OBS over the footprint (Metal4, plus Metal3 in
-wire mode so the load's surroundings are fixed rather than whatever the router
-puts over it), leaving a window around the pin for access.
+  bitmap  Functional (default; D-ART-DOG). Like wire, but the shape comes from a
+        1-bit image (--bitmap, default macros/dog_portrait.png: a 62x62
+        portrait of the author's dog, 0.5 um pixels). The polygon touching
+        pin A is the load; other islands (the tongue) float.
+
+In every mode the LEF carries an OBS over the footprint (Metal4, plus Metal3 in
+wire/bitmap mode so the load's surroundings are fixed rather than whatever the
+router puts over it), leaving a window around the pin for access.
 
 Wire-mode capacitance estimate (for the .lib only; the silicon measures the
 real value). LibreLane's Metal4 RC (dumprcvalues: 7.756e-5 pF/um for a 0.28 um
@@ -37,7 +42,7 @@ CA ~ 0.009 fF/um^2 (Metal4 roughly 4 um of oxide above substrate) and CF the
 remainder, (0.0776 - 0.28*CA)/2 fF/um per edge. Treat it as +/-50%.
 
 Usage:
-  python tools/make_art.py [--mode wire|dots] [--text "PARV/BHADRA"]
+  python tools/make_art.py [--mode bitmap|wire|dots] [--bitmap PNG] [--text "PARV/BHADRA"]
 """
 import argparse
 import math
@@ -172,6 +177,17 @@ def wire_pixels(lines, pin_side):
     return fill_diagonals(lit), cols, top_base + GLYPH_H + 1
 
 
+def bitmap_pixels(path):
+    """Lit (col, row) from a 1-bit image (white = metal), row 0 at the bottom,
+    with diagonal-only contacts filled like the other modes."""
+    from PIL import Image
+    im = Image.open(path).convert("1")
+    W, H = im.size
+    px = im.load()
+    lit = {(c, H - 1 - r) for r in range(H) for c in range(W) if px[c, r]}
+    return fill_diagonals(lit), W, H
+
+
 def write_lef(path, w, h, pin=None, obs_layers=("Metal4",), antenna=None):
     def rects_around():
         if pin is None:
@@ -245,7 +261,9 @@ def write_lib(path, area, cap_pf):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", choices=("wire", "dots"), default="wire")
+    ap.add_argument("--mode", choices=("bitmap", "wire", "dots"), default="bitmap")
+    ap.add_argument("--bitmap", default=os.path.join(os.path.dirname(__file__), "..", "macros", "dog_portrait.png"),
+                    help="bitmap mode: 1-bit image, white = Metal4, top row = top of the art")
     ap.add_argument("--text", default="PARV/BHADRA", help="'/' separates lines")
     ap.add_argument("--pixel", type=float, help="pixel side, um (wire 0.85, dots 0.5)")
     ap.add_argument("--pitch", type=float, help="pixel pitch, um (wire 0.85, dots 0.9)")
@@ -254,13 +272,16 @@ def main():
                     help="wire mode: bottom corner for pin A (right faces the ring bank)")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "..", "macros"))
     a = ap.parse_args()
-    wire = a.mode == "wire"
-    pixel = a.pixel or (0.85 if wire else 0.5)
-    pitch = a.pitch or (0.85 if wire else 0.9)
+    bitmap = a.mode == "bitmap"
+    wire = a.mode in ("wire", "bitmap")          # both are a connected load with pin A
+    pixel = a.pixel or {"bitmap": 0.5, "wire": 0.85, "dots": 0.5}[a.mode]
+    pitch = a.pitch or {"bitmap": 0.5, "wire": 0.85, "dots": 0.9}[a.mode]
     check_rules(pixel, pitch, solid=wire)
 
     lines = a.text.split("/")
-    if wire:
+    if bitmap:
+        lit, cols, rows = bitmap_pixels(a.bitmap)
+    elif wire:
         lit, cols, rows = wire_pixels(lines, a.pin)
     else:
         lit = set(glyph_pixels(lines, col0=0, row0=-1))
@@ -284,12 +305,16 @@ def main():
             pin = (snap(ox + art_w - pixel), 0.0, w, snap(oy + pixel))
         rects.append(gdstk.rectangle(pin[:2], pin[2:]))
         merged = gdstk.boolean(rects, [], "or", layer=ART_LAYER, datatype=ART_DATATYPE)
-        if len(merged) != 1:
-            raise SystemExit(f"wire mode: art is {len(merged)} polygons, expected 1")
+        # The polygon touching the pin is the load; in bitmap mode any other
+        # islands (e.g. the tongue) are allowed and simply float.
+        load = [p for p in merged if gdstk.inside([((pin[0] + pin[2]) / 2, (pin[1] + pin[3]) / 2)], p)[0]]
+        if len(load) != 1 or (not bitmap and len(merged) != 1):
+            raise SystemExit(f"{a.mode} mode: {len(merged)} polygons, {len(load)} touching the pin")
+        islands = [p for p in merged if p is not load[0]]
         diag = [(c, r) for c, r in lit for dc, dr in ((1, 1), (1, -1))
                 if (c + dc, r + dr) in lit and (c + dc, r) not in lit and (c, r + dr) not in lit]
         if diag:
-            raise SystemExit(f"wire mode: diagonal-only contacts left at {diag[:5]}")
+            raise SystemExit(f"{a.mode} mode: diagonal-only contacts left at {diag[:5]}")
         shapes = merged
     else:
         shapes = [gdstk.rectangle(r.bounding_box()[0], r.bounding_box()[1],
@@ -302,20 +327,21 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     base = os.path.join(a.out, CELL_NAME)
 
-    summary = (f"{CELL_NAME} [{a.mode}{', pin ' + a.pin if wire else ''}]: {a.text!r}, {w} x {h} um, "
+    what = os.path.basename(a.bitmap) if bitmap else repr(a.text)
+    summary = (f"{CELL_NAME} [{a.mode}{', pin ' + a.pin if wire else ''}]: {what}, {w} x {h} um, "
                f"pixel {pixel} / pitch {pitch} um")
     if wire:
         cell.add(gdstk.rectangle(pin[:2], pin[2:], layer=PIN_LAYER, datatype=PIN_DATATYPE))
         cell.add(gdstk.Label(PIN_NAME, ((pin[0] + pin[2]) / 2, (pin[1] + pin[3]) / 2),
                              layer=PIN_LAYER, texttype=PIN_DATATYPE))
-        area = sum(p.area() for p in shapes)
-        perim = sum(p.perimeter() for p in shapes)
+        area = load[0].area()          # only the polygon on the net counts
+        perim = load[0].perimeter()
         cap_ff = CA * area + CF * perim
         write_lef(base + ".lef", w, h, pin=pin, obs_layers=("Metal4", "Metal3"),
                   antenna=(area, perim * M4_THICKNESS))
         write_lib(base + ".lib", w * h, cap_ff / 1000)
-        summary += (f", Metal4 area {area:.1f} um^2, perimeter {perim:.1f} um, "
-                    f"est. C = {cap_ff:.1f} fF")
+        summary += (f", load Metal4 area {area:.1f} um^2, perimeter {perim:.1f} um, "
+                    f"est. C = {cap_ff:.1f} fF, {len(islands)} floating island(s)")
     else:
         write_lef(base + ".lef", w, h)
         for stale in (base + ".lib",):

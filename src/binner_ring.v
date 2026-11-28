@@ -16,8 +16,8 @@
  * KIND 2 (NOR) : every stage = NOR2 (A1 = loop, A2 = en_b)
  * KIND 3 (FO4) : as INV, and every stage output also drives 3 dummy INV_1 loads
  * KIND 4 (ART) : as INV, and stage LD_STG's output is also brought out on `ld`,
- *                where project.v hangs the Metal4 name art (binner_art) on it as
- *                a ~19 fF wire load (DECISIONS.md D-ART-RO). `ld` is 0 for every
+ *                where project.v hangs the Metal4 art (binner_art, a dog
+ *                portrait) on it as a ~16 fF wire load (DECISIONS.md D-ART-RO, D-ART-DOG). `ld` is 0 for every
  *                other KIND.
  *
  * When en = 0 every node is at a static, known level (NAND/INV: stage 0 high,

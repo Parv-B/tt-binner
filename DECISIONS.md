@@ -575,3 +575,38 @@ viewer pass; LVS 0, routing DRC 0, antenna 0 nets and 0 diodes. The art landed a
 - **Decision:** merge this layout (the user's choice: shorten the feed, then merge
   the better result). 39f98dc beats 092e95b because the name, not a Metal3 feed,
   is what the art ring measures.
+
+## D-ART-DOG -- a portrait of the author's dog replaces the name as the art ring's load (2026-11-28, branch feat/dog)
+
+**What.** At the user's request the name is removed and replaced by a portrait of
+their dog. It stays functional: it is the Metal4 wire load on stage 12 of the art
+ring (source 21), exactly where the name was. No RTL change. VER stays 0x03, because
+the register-visible behaviour is unchanged (source 21 is still the loaded ring).
+
+**Art.** `macros/dog_portrait.png` is a 62x62 1-bit bitmap, the only image
+committed. The source photo stays out of the repo. It was made from a studio
+photo: the head and ear silhouette is segmented against the black background
+and lightly shaded with local contrast, and the eyes (with catch-lights), nose
+and open mouth with tongue are drawn on at positions measured from the photo.
+A straight conversion smeared the face at this resolution. The user approved
+this version over a taller one with chest and paws.
+
+**Macro** (`make_art.py --mode bitmap`, now the default): 0.5 um solid pixels,
+31 x 31 um of art in a 32.48 x 35.28 um footprint (9 rows), at the same location
+as the name (218.96, 47.04), in the 218.13-252.10 um stripe gap beside the ring.
+Pin A at the bottom-right, unchanged: the bitmap's bottom-right pixel belongs to
+the main shape, so no extra wire is needed. That one polygon is the load: 618.5
+um^2, 281.8 um perimeter. The tongue (35 px) is a separate floating island, as
+in the decorative version. KLayout width/space/notch/area checks are clean.
+`--mode wire` still reproduces the name macro exactly.
+
+**Load estimate 16.1 fF, about the same as the name (19.0 fF), not more.** The
+portrait has 3x the name's metal area but much less edge: one compact blob
+against thin letter strokes. On Metal4 the fringe (edge) term dominates the
+estimate (5.6 fF area + 10.6 fF fringe here). The area coefficient is the least
+certain part of the model, so the true ratio to the name may differ. Silicon
+measures it. Antenna: Metal4 side area 152 um^2 for the art, about 61 with
+the routing, vs 400 allowed (the name was ~94).
+
+**Merge rule** as before: CI fully green; the art ring's stage-12 SDF delay
+increment consistent with ~16 fF; the other rings near the 658bf41 baseline.

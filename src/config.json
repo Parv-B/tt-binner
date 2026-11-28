@@ -45,8 +45,9 @@
   "//": "BINNER: base.sdc plus false paths into the Fmax capture flops. See DECISIONS.md D-SDC.",
   "FALLBACK_SDC_FILE": "dir::binner.sdc",
 
-  "//": "BINNER: author-name silicon art, a one-pin Metal4 macro from tools/make_art.py. It is",
-  "//": "the ~19 fF wire load of the art ring (source 21); its .lib gives STA that load. See D-ART-RO.",
+  "//": "BINNER: silicon art (a portrait of the author's dog), a one-pin Metal4 macro from",
+  "//": "tools/make_art.py. It is the ~16 fF wire load of the art ring (source 21); its .lib",
+  "//": "gives STA that load. See DECISIONS.md D-ART-RO and D-ART-DOG.",
   "//": "Placed in the Metal4 PDN stripe gap x 218.13-252.10 um (clearance 0.83/0.66 um), where",
   "//": "the art ring settled in 092e95b, with pin A at the bottom-right facing the ring bank,",
   "//": "to shorten the routed feed (253 um there). See DECISIONS.md D-ART-RO.",

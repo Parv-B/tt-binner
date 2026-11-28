@@ -21,12 +21,12 @@ library (binner_art) {
   slew_lower_threshold_pct_fall : 30 ;
   slew_upper_threshold_pct_fall : 70 ;
   cell (binner_art) {
-    area : 509.286 ;
+    area : 1145.894 ;
     dont_touch : true ;
     dont_use : true ;
     pin (A) {
       direction : input ;
-      capacitance : 0.018963 ;
+      capacitance : 0.016144 ;
     }
   }
 }

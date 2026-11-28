@@ -24,8 +24,8 @@
  *   16     NAND2 ring   17 NOR2 ring   18 FO4 INV ring
  *   19     delay-chain ring (tap from DTAP)
  *   20     clk / 2 test source (known answer; gate-level test)
- *   21     art ring: INV ring whose stage 12 also drives the ~19 fF Metal4
- *          name art (placed beside the ring, ~12 um feed): a back-end
+ *   21     art ring: INV ring whose stage 12 also drives the ~16 fF Metal4
+ *          dog-portrait art (placed beside the ring): a back-end
  *          wire-capacitance monitor vs. sources 0..15 (population-level)
  *   22..31 constant 0
  */
@@ -163,8 +163,8 @@ module tt_um_parv_b_binner (
   binner_ring #(.N(N_FO4), .KIND(3), .IDX(18)) u_ring_fo4  (.en(ren[18]), .out(src[18]), .ld());
   /* verilator lint_on PINCONNECTEMPTY */
 
-  // Art ring (source 21): a PUF-identical INV ring with the Metal4 name art as a
-  // wire load on one stage (~+0.2 ns on that stage, ~5% of the period).
+  // Art ring (source 21): a PUF-identical INV ring with the Metal4 dog-portrait
+  // art as a wire load on one stage.
   // Compared against the mean of sources 0..15 it gives a back-end
   // wire-capacitance index. See DECISIONS.md D-ART-RO.
   wire ren_art = run & ((src_a == 5'd21) | (src_b == 5'd21));
@@ -299,7 +299,7 @@ module tt_um_parv_b_binner (
 
   wire _unused = &{uio_in, 1'b0};
 
-  // Silicon art (author name on Metal4): one connected shape, pin A only, no
+  // Silicon art (a portrait of the author's dog on Metal4): one connected shape, pin A only, no
   // logic. It is the wire load of the art ring above. Geometry comes from
   // macros/binner_art.gds via MACROS in src/config.json. See DECISIONS.md D-ART-RO.
   (* keep *)
