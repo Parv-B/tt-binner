@@ -610,3 +610,19 @@ the routing, vs 400 allowed (the name was ~94).
 
 **Merge rule** as before: CI fully green; the art ring's stage-12 SDF delay
 increment consistent with ~16 fF; the other rings near the 658bf41 baseline.
+
+**CI result, a905b59: fully green on the first run.** gds, precheck, gl_test,
+viewer, docs and test all pass. LVS 0, routing DRC 0, antenna 0 nets and 0 diodes.
+Net `u_ring_art.ring_notouch_[12]` = stage 12 ZN -> stage 13 I + art A, feed 17.3 um
+(7.2 Metal4, 7.3 Metal3, 2.8 Metal2). Against main 658bf41 (name), nom_tt:
+- **Stage-12 SDF increment +0.206 ns vs the name's +0.208 ns.** The two loads are
+  effectively equal, which confirms the "about the same as the name" estimate
+  (16.1 vs 19.0 fF model; the dog's feed is 5 um longer).
+- PUF rings: mean -6.2% (8.171 -> 7.661 ns); spread **20.1% -> 10.7%** (sd/mean).
+  This placement happened to spread the 16 rings much more evenly. It is luck of
+  placement, not a design change, but it shrinks the layout offset in `art_load`.
+- NAND -3.1%, NOR +2.7%, FO4 +0.4%, art ring -0.7%, the same at ss/ff. Delay-chain
+  Fmax T_min per tap -0.1% to +1.3%.
+- Utilization 88.5% -> 90.2%; hold WS 0.162 ns; setup WS +16.8 ns; max-slew
+  508 -> 523 (the pre-existing unbuffered ring structures); disconnected pins 9 -> 9.
+- Merge rule met.
